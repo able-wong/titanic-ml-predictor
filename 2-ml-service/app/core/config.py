@@ -244,44 +244,10 @@ class ConfigManager:
             "jwt": {
                 "algorithm": "RS256",
                 "access_token_expire_minutes": 60,
-                # Test keys (NOT for production)
-                "private_key": """-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCul2RlJhUd1srP
-SabhKjQCdMmusBn8i3jDPLBYUh1/rupJzrtA2bKSm37Ja/SMfrmB2ov3RMMO8TCC
-kuqfSDWOFewzNSLzvn82x1Ajv2ynhmUesH052jeLqVQzXZb4ymA00uWHYXWM5nLL
-qwdmV7FDov2dFYgBaAJI+FTZKV4eO+y7Q8KdZ7qiQaJ9JwcSmcJ8jPl9p1Le0Rpk
-ajkniIHsFyvY4iZS7Ps8HlKi/TzFRWSj6TooGnFjLHM22Ty9vXevXadqHfqGRUJB
-OteoEiCpcqg8bw9AhUaMUOzRW+AV7RO6QUKTnfSG88TwIOdQlJxwredNZ6HuonhF
-iER8ggB1AgMBAAECgf9poRr/A7LC7omx3/s0odP9Cuar06SCzi39LE5JvscaIHSf
-MwgD72NMASpH2jn9FUwm65Kbmy/K0KuSoxVj+i6UDTlG1a33QGdUn3z6cpFULCzG
-qXbyursbf2DKn0FLpv3cqPcOIpAtaivO0irs3eZED3Y5//4X72kjvMw2b2R4NBdx
-CieR9BSWhUUVt6FXa5TgaXfXoGRWelF9PxEeRBeEdBSB/USkrrRnd3wHnWoVdP7y
-ybLDsuq+MYnIm/FGL+/i3eXqM0ZypJmaVZLqqze26NhW9tiJ+5gryyw7b1T/4xhS
-qkFHapBRTCqnN7RWiFF67Ic0zYW51G82TGME+ssCgYEA4/QZlb7oN3rw2HmHQAiS
-NxmHjoFZfI15v5EZP0wMonG4ccdPoOfaL0IGidb/TjqVXUsrzMswKY9ABDOlahXb
-HRxY0gjDq+D8L6oFicoj+JspkA9C6z2LvbpGJL0UZOqExF1UehjosqmZ4JQPvugv
-+5afvIeRBaJZLXiDuApvnecCgYEAxBKInCCfv4qCi7ssrTIfcnwkcV4L+NUFaHvt
-ND+hSW1j59cZeJytRWGe7e2VczQgOgq25CduZh7BL4sAJb6++iSaQ4c0nQm8T6hK
-TuoNdzQnfn67L7QMcuN0cLCtJutY5Y1BA0+0kE5a73BYyIO35vMVVjsWkP+cHUdC
-4BaPS0MCgYEAqrnbn6fHzCWr1LXQckj5GYNpX3XJS9u535wQyLNwkwmRFsYsAVsk
-slhFBV+c/z4pOCJgv5U+kSHU1FDKBtYvsXHVpBkkU8rBlgFE/JoEruGnE1oayIzj
-6Elm14U1jQ+IOHmeF4QoZAdaVDUQRe8oYMnDATSXjRy2pbOpE2HdjukCgYEAsrFx
-b1kMPjSt5Usg3Hfh0STy0Z80qgL6es72z7dt9s2LT6/pttKT17ewcIcmvWe0NzGs
-nSKSqt88kWfNKpk81BynuwNuH/DPfomRr3n/67PMiqxVTJR7A/noFQvvwpia3Bpw
-NeReW2YN2ko5oATrhb/kokIXvu42CTj46eGllqECgYEAv93k52SPeqUsFJENrrWh
-KSo0FnKK5slYVG6deHMoPt9xRSLFTlullKplm24BKkMiz3Ez2AqE9yVNYBRH5imz
-DbZ4L8H9IqVMQq+I7UpjS1AmvUf3OMsOozr41Dh8j1GuukNWWSylLaY+GSqLBW6N
-s+ctrW2CrMxvmFf3EX9x2jc=
------END PRIVATE KEY-----""",
-                "public_key": """-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArpdkZSYVHdbKz0mm4So0
-AnTJrrAZ/It4wzywWFIdf67qSc67QNmykpt+yWv0jH65gdqL90TDDvEwgpLqn0g1
-jhXsMzUi875/NsdQI79sp4ZlHrB9Odo3i6lUM12W+MpgNNLlh2F1jOZyy6sHZlex
-Q6L9nRWIAWgCSPhU2SleHjvsu0PCnWe6okGifScHEpnCfIz5fadS3tEaZGo5J4iB
-7Bcr2OImUuz7PB5Sov08xUVko+k6KBpxYyxzNtk8vb13r12nah36hkVCQTrXqBIg
-qXKoPG8PQIVGjFDs0VvgFe0TukFCk530hvPE8CDnUJSccK3nTWeh7qJ4RYhEfIIA
-dQIDAQAB
------END PUBLIC KEY-----"""
+                # JWT keys should be provided via environment variables
+                # For local testing, use config.yaml or set JWT_PRIVATE_KEY and JWT_PUBLIC_KEY
+                "private_key": "",
+                "public_key": ""
             },
             "api": {
                 "host": "127.0.0.1",

@@ -36,6 +36,24 @@ python main.py
 
 See [tests/README.md](tests/README.md) for comprehensive test documentation.
 
+### Setting up JWT Keys for Testing
+
+Tests require JWT keys for authentication. Generate them using:
+
+```bash
+# Option 1: Use the helper script (from project root)
+source scripts/generate_test_keys.sh
+
+# Option 2: Generate manually
+openssl genrsa -out test_private.pem 2048
+openssl rsa -in test_private.pem -pubout -out test_public.pem
+export JWT_PRIVATE_KEY="$(cat test_private.pem)"
+export JWT_PUBLIC_KEY="$(cat test_public.pem)"
+rm test_private.pem test_public.pem
+```
+
+### Running Tests
+
 ```bash
 # Run all tests
 ./doit.sh python-service-tests
