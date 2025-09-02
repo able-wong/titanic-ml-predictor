@@ -49,8 +49,8 @@ Usage: ./doit.sh <command> [options]
 
 Available Commands:
   train                 Train the ML models using the training pipeline
-  lint                  Run ruff linting on all Python code
-  lint-fix              Run ruff with --fix to automatically fix issues
+  lint                  Run ruff linting and formatting checks on all Python code
+  lint-fix              Run ruff with --fix and apply formatting to automatically fix issues
   python-security-scan  Run security vulnerability scan on Python code
   python-service-tests  Run the comprehensive test suite for the ML service
   python-service-start  Start the FastAPI ML service
@@ -94,12 +94,19 @@ cmd_lint() {
         exit 1
     fi
     
+    # Run linting checks
     ruff check 1-training/ 2-ml-service/ shared/ "$@"
+    lint_exit_code=$?
     
-    if [ $? -eq 0 ]; then
-        print_success "Code linting passed"
+    # Run formatting checks
+    print_info "Checking code formatting with ruff..."
+    ruff format --check 1-training/ 2-ml-service/ shared/ "$@"
+    format_exit_code=$?
+    
+    if [ $lint_exit_code -eq 0 ] && [ $format_exit_code -eq 0 ]; then
+        print_success "Code linting and formatting checks passed"
     else
-        print_error "Code linting found issues"
+        print_error "Code linting or formatting checks found issues"
         exit 1
     fi
 }
@@ -116,12 +123,19 @@ cmd_lint_fix() {
         exit 1
     fi
     
+    # Fix linting issues
     ruff check --fix 1-training/ 2-ml-service/ shared/ "$@"
+    lint_exit_code=$?
     
-    if [ $? -eq 0 ]; then
-        print_success "Code linting and fixes completed"
+    # Apply code formatting
+    print_info "Applying code formatting with ruff..."
+    ruff format 1-training/ 2-ml-service/ shared/ "$@"
+    format_exit_code=$?
+    
+    if [ $lint_exit_code -eq 0 ] && [ $format_exit_code -eq 0 ]; then
+        print_success "Code linting fixes and formatting completed"
     else
-        print_error "Code linting fixes failed"
+        print_error "Code linting fixes or formatting failed"
         exit 1
     fi
 }
