@@ -151,38 +151,20 @@ cmd_python_service_start() {
 cmd_install_deps() {
     print_header "Installing Dependencies"
     
-    # Install training dependencies
-    print_info "Installing training dependencies..."
-    cd "$PROJECT_ROOT/1-training"
+    cd "$PROJECT_ROOT"
+    
+    # Install all dependencies from consolidated requirements.txt
+    print_info "Installing project dependencies from consolidated requirements.txt..."
     if [ -f "requirements.txt" ]; then
         pip install -r requirements.txt
-        print_success "Training dependencies installed"
+        print_success "Project dependencies installed"
     else
-        print_warning "No requirements.txt found in 1-training/"
+        print_error "No requirements.txt found in project root"
+        exit 1
     fi
     
-    # Install service dependencies
-    print_info "Installing ML service dependencies..."
-    cd "$PROJECT_ROOT/2-ml-service"
-    if [ -f "requirements.txt" ]; then
-        pip install -r requirements.txt
-        print_success "ML service dependencies installed"
-    else
-        print_warning "No requirements.txt found in 2-ml-service/"
-    fi
-    
-    # Install shared dependencies
-    print_info "Installing shared dependencies..."
-    cd "$PROJECT_ROOT/shared"
-    if [ -f "requirements.txt" ]; then
-        pip install -r requirements.txt
-        print_success "Shared dependencies installed"
-    else
-        print_warning "No requirements.txt found in shared/"
-    fi
-    
-    # Install development tools
-    print_info "Installing development tools..."
+    # Install development tools (ruff is now included in requirements.txt as optional)
+    print_info "Installing additional development tools..."
     pip install ruff
     print_success "Development tools installed"
     
