@@ -13,9 +13,13 @@ from typing import Any, Dict
 from datetime import datetime, timezone
 
 
-def add_timestamp(logger: Any, method_name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
+def add_timestamp(
+    logger: Any, method_name: str, event_dict: Dict[str, Any]
+) -> Dict[str, Any]:
     """Add ISO 8601 timestamp to log entries."""
-    event_dict["timestamp"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    event_dict["timestamp"] = (
+        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
     return event_dict
 
 
@@ -28,7 +32,9 @@ def add_service_context(
     return event_dict
 
 
-def add_log_level(logger: Any, method_name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
+def add_log_level(
+    logger: Any, method_name: str, event_dict: Dict[str, Any]
+) -> Dict[str, Any]:
     """Normalize log level names for consistency."""
     # Map structlog method names to standard log levels
     level_mapping = {
@@ -68,7 +74,9 @@ def filter_sensitive_data(
     return _filter_dict(event_dict)
 
 
-def setup_structured_logging(environment: str = "development", log_level: str = "INFO") -> None:
+def setup_structured_logging(
+    environment: str = "development", log_level: str = "INFO"
+) -> None:
     """
     Configure structured JSON logging with platform-agnostic output.
 
@@ -82,7 +90,9 @@ def setup_structured_logging(environment: str = "development", log_level: str = 
 
     # Configure standard library logging to work with structlog
     logging.basicConfig(
-        format="%(message)s", stream=sys.stdout, level=getattr(logging, log_level.upper())
+        format="%(message)s",
+        stream=sys.stdout,
+        level=getattr(logging, log_level.upper()),
     )
 
     # Configure structlog processors
@@ -96,7 +106,10 @@ def setup_structured_logging(environment: str = "development", log_level: str = 
         # Filter sensitive information
         filter_sensitive_data,
         # Add environment context
-        lambda logger, method_name, event_dict: {**event_dict, "environment": environment},
+        lambda logger, method_name, event_dict: {
+            **event_dict,
+            "environment": environment,
+        },
         # Convert to JSON for output
         structlog.processors.JSONRenderer(sort_keys=True),
     ]
@@ -130,7 +143,10 @@ def get_logger(component: str = None) -> structlog.stdlib.BoundLogger:
 
 
 def add_request_context(
-    request_id: str = None, user_id: str = None, endpoint: str = None, method: str = None
+    request_id: str = None,
+    user_id: str = None,
+    endpoint: str = None,
+    method: str = None,
 ) -> structlog.stdlib.BoundLogger:
     """
     Create a logger with request context bound to it.
@@ -264,7 +280,10 @@ class StructuredLogger:
         **kwargs,
     ) -> None:
         """Log rate limiting events."""
-        log_data = {"rate_limit_type": limit_type, "rate_limit_exceeded": limit_exceeded}
+        log_data = {
+            "rate_limit_type": limit_type,
+            "rate_limit_exceeded": limit_exceeded,
+        }
 
         if current_count is not None:
             log_data["current_count"] = current_count

@@ -25,7 +25,7 @@ from app.core import (
     config_manager,
     setup_structured_logging,
     get_logger,
-    MLServiceError
+    MLServiceError,
 )
 
 # Import services
@@ -38,12 +38,13 @@ from app.api.routes import health_router, predictions_router, models_router
 app_config = None
 logger = None
 
+
 # Firebase Functions optimized lifespan
 @asynccontextmanager
 async def firebase_lifespan(app: FastAPI):
     """
     Ultra-fast lifespan handler for Firebase Functions.
-    
+
     Optimizations:
     - No model loading at startup (lazy loading)
     - Minimal validation only
@@ -51,21 +52,23 @@ async def firebase_lifespan(app: FastAPI):
     - No health checks at startup
     """
     startup_start = time.time()
-    
+
     try:
-        logger.info("Starting Titanic ML Prediction API", startup_phase="initialization")
-        
+        logger.info(
+            "Starting Titanic ML Prediction API", startup_phase="initialization"
+        )
+
         # Fast ML service initialization (no model loading)
         await ml_service.load_models()  # Just validates directory
-        
+
         startup_time = (time.time() - startup_start) * 1000
         logger.info(
             "ML service initialized successfully",
             startup_phase="completed",
             startup_time_ms=round(startup_time, 2),
-            startup_mode="optimized"
+            startup_mode="optimized",
         )
-        
+
     except Exception as e:
         startup_time = (time.time() - startup_start) * 1000
         logger.error(
@@ -73,12 +76,12 @@ async def firebase_lifespan(app: FastAPI):
             startup_phase="failed",
             startup_time_ms=round(startup_time, 2),
             error_message=str(e),
-            error_type=type(e).__name__
+            error_type=type(e).__name__,
         )
         raise
-    
+
     yield
-    
+
     # Minimal cleanup
     logger.info("Shutting down Titanic ML Prediction API", shutdown_phase="cleanup")
 
@@ -86,23 +89,22 @@ async def firebase_lifespan(app: FastAPI):
 def load_app_config():
     """Fast configuration loading optimized for startup performance."""
     global app_config, logger
-    
+
     # Load configuration (cached after first load)
     app_config = config_manager.load_config()
-    
+
     # Minimal logging setup
     setup_structured_logging(
-        environment=app_config.environment,
-        log_level=app_config.logging.level.upper()
+        environment=app_config.environment, log_level=app_config.logging.level.upper()
     )
-    
+
     logger = get_logger("main")
-    
+
     logger.info(
         "Application configuration loaded",
         environment=app_config.environment,
         jwt_algorithm=app_config.jwt.algorithm,
-        token_expire_minutes=app_config.jwt.access_token_expire_minutes
+        token_expire_minutes=app_config.jwt.access_token_expire_minutes,
     )
 
 
@@ -153,23 +155,20 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_tags=[
-        {
-            "name": "Root",
-            "description": "Service information and basic endpoints"
-        },
+        {"name": "Root", "description": "Service information and basic endpoints"},
         {
             "name": "Health",
-            "description": "Health check endpoints for monitoring service status"
+            "description": "Health check endpoints for monitoring service status",
         },
         {
-            "name": "Predictions", 
-            "description": "ML prediction endpoints (authentication required)"
+            "name": "Predictions",
+            "description": "ML prediction endpoints (authentication required)",
         },
         {
             "name": "Models",
-            "description": "Model information endpoints (authentication required)"
-        }
-    ]
+            "description": "Model information endpoints (authentication required)",
+        },
+    ],
 )
 
 # Minimal middleware setup
@@ -181,6 +180,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Lightweight request tracking
 @app.middleware("http")
 async def lightweight_middleware(request: Request, call_next):
@@ -188,9 +188,9 @@ async def lightweight_middleware(request: Request, call_next):
     start_time = time.time()
     request_id = str(uuid.uuid4())[:8]  # Shorter ID for Firebase
     request.state.request_id = request_id
-    
+
     response = await call_next(request)
-    
+
     # Minimal logging
     process_time = (time.time() - start_time) * 1000
     if process_time > 100:  # Only log slow requests
@@ -198,9 +198,9 @@ async def lightweight_middleware(request: Request, call_next):
             "Request completed",
             request_id=request_id,
             endpoint=str(request.url.path),
-            duration_ms=round(process_time, 2)
+            duration_ms=round(process_time, 2),
         )
-    
+
     response.headers["X-Request-ID"] = request_id
     return response
 
@@ -209,10 +209,9 @@ async def lightweight_middleware(request: Request, call_next):
 @app.exception_handler(MLServiceError)
 async def ml_service_exception_handler(request: Request, exc: MLServiceError):
     """Handle ML service exceptions."""
-    request_id = getattr(request.state, 'request_id', None)
+    request_id = getattr(request.state, "request_id", None)
     return JSONResponse(
-        status_code=exc.status_code,
-        content=exc.to_error_detail(request_id).dict()
+        status_code=exc.status_code, content=exc.to_error_detail(request_id).dict()
     )
 
 
@@ -222,12 +221,12 @@ async def root():
     """Fast root endpoint."""
     return {
         "service": "Titanic ML Prediction API",
-        "version": "2.1.0", 
+        "version": "2.1.0",
         "status": "running",
         "startup_mode": "optimized",
         "authentication": "JWT Bearer token required for predictions",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 
@@ -239,12 +238,6 @@ app.include_router(models_router)
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     print("🚀 Starting optimized Titanic ML API...")
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

@@ -25,7 +25,9 @@ class JWTConfig(BaseModel):
     """JWT authentication configuration."""
 
     algorithm: str = Field(default="RS256", description="JWT algorithm")
-    access_token_expire_minutes: int = Field(default=60, description="Token expiration in minutes")
+    access_token_expire_minutes: int = Field(
+        default=60, description="Token expiration in minutes"
+    )
     private_key: str = Field(..., description="RSA private key for signing tokens")
     public_key: str = Field(..., description="RSA public key for verifying tokens")
 
@@ -36,7 +38,9 @@ class APIConfig(BaseModel):
     host: str = Field(default="127.0.0.1", description="Server host")
     port: int = Field(default=8000, description="Server port")
     reload: bool = Field(default=True, description="Enable auto-reload for development")
-    rate_limit: str = Field(default="100/minute", description="Rate limiting configuration")
+    rate_limit: str = Field(
+        default="100/minute", description="Rate limiting configuration"
+    )
     cors_origins: List[str] = Field(
         default=["http://localhost:3000"], description="CORS allowed origins"
     )
@@ -47,7 +51,8 @@ class LoggingConfig(BaseModel):
 
     level: str = Field(default="INFO", description="Log level")
     format: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s", description="Log format"
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        description="Log format",
     )
 
 
@@ -65,15 +70,21 @@ class HealthConfig(BaseModel):
 class RateLimitingRedisConfig(BaseModel):
     """Redis configuration for rate limiting."""
 
-    url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
+    url: str = Field(
+        default="redis://localhost:6379/0", description="Redis connection URL"
+    )
 
 
 class RateLimitingLimitsConfig(BaseModel):
     """Rate limit values for different endpoint types."""
 
     default: str = Field(default="100/minute", description="Default rate limit")
-    predictions: str = Field(default="50/minute", description="Rate limit for ML predictions")
-    health: str = Field(default="200/minute", description="Rate limit for health checks")
+    predictions: str = Field(
+        default="50/minute", description="Rate limit for ML predictions"
+    )
+    health: str = Field(
+        default="200/minute", description="Rate limit for health checks"
+    )
     auth: str = Field(default="20/minute", description="Rate limit for auth operations")
 
 

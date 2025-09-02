@@ -83,14 +83,17 @@ class MLService:
             with open(os.path.join(self.models_dir, "logistic_model.pkl"), "rb") as f:
                 self.lr_model = pickle.load(f)  # nosec B301 - internal model files only
 
-            with open(os.path.join(self.models_dir, "decision_tree_model.pkl"), "rb") as f:
+            with open(
+                os.path.join(self.models_dir, "decision_tree_model.pkl"), "rb"
+            ) as f:
                 self.dt_model = pickle.load(f)  # nosec B301 - internal model files only
 
             # Load evaluation results for health checks
             eval_results_path = os.path.join(self.models_dir, "evaluation_results.json")
             if os.path.exists(eval_results_path):
                 self.logger.info(
-                    "Loading model evaluation results", initialization_phase="evaluation_results"
+                    "Loading model evaluation results",
+                    initialization_phase="evaluation_results",
                 )
                 with open(eval_results_path, "r") as f:
                     eval_results = json.load(f)
@@ -98,7 +101,9 @@ class MLService:
                         "logistic_regression": eval_results.get(
                             "logistic_regression_accuracy", 0.0
                         ),
-                        "decision_tree": eval_results.get("decision_tree_accuracy", 0.0),
+                        "decision_tree": eval_results.get(
+                            "decision_tree_accuracy", 0.0
+                        ),
                         "ensemble": eval_results.get("ensemble_accuracy", 0.0),
                     }
             else:
@@ -146,7 +151,9 @@ class MLService:
             "model_accuracy": self.model_accuracy if self.is_loaded else None,
         }
 
-    async def predict_survival(self, passenger_data: Dict[str, Any]) -> PredictionResponse:
+    async def predict_survival(
+        self, passenger_data: Dict[str, Any]
+    ) -> PredictionResponse:
         """
         Predict survival probability for a passenger.
 
@@ -161,10 +168,14 @@ class MLService:
             Exception: If prediction fails
         """
         if not self.is_loaded:
-            raise ModelNotLoadedError("Models not loaded. Service initialization failed.")
+            raise ModelNotLoadedError(
+                "Models not loaded. Service initialization failed."
+            )
 
         try:
-            self.logger.debug("Starting prediction process", prediction_phase="preprocessing")
+            self.logger.debug(
+                "Starting prediction process", prediction_phase="preprocessing"
+            )
 
             # Preprocess passenger data using shared preprocessor
             features = self.preprocessor.preprocess_single_passenger(passenger_data)
