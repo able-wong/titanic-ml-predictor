@@ -6,7 +6,7 @@ for distributed rate limiting across multiple service instances.
 """
 
 import time
-from typing import Dict, Optional
+from typing import Dict
 from fastapi import Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
