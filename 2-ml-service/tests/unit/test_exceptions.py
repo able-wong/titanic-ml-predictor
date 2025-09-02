@@ -4,7 +4,6 @@ Unit tests for custom exception classes.
 Tests the improved exception handling with more specific HTTP status codes.
 """
 
-import pytest
 from fastapi import status
 
 from app.core.exceptions import (

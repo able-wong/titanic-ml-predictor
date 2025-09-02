@@ -1,0 +1,36 @@
+# Titanic ML Predictor - Consolidated Dependencies
+# This file contains all dependencies for the entire project
+
+# Core FastAPI dependencies
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
+
+# JWT Authentication
+PyJWT==2.10.1
+cryptography==45.0.7
+
+# Configuration management
+pyyaml==6.0.2
+
+# Production features
+slowapi==0.1.9  # Rate limiting
+redis==6.4.0  # Rate limiting backend
+structlog==25.4.0  # Structured JSON logging
+psutil==7.0.0  # System resource monitoring
+
+# Testing dependencies
+pytest==8.4.1
+pytest-asyncio==1.1.0
+httpx==0.28.1  # For testing FastAPI
+pytest-cov==6.2.1  # Coverage reporting
+
+# Machine learning dependencies
+pandas==2.3.2
+numpy==2.3.2
+scikit-learn==1.7.1
+
+# Development tools (optional - can be installed separately)
+# black==23.12.1  # Code formatting
+# flake8==7.0.0   # Linting
+# mypy==1.8.0     # Type checking

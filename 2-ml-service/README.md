@@ -34,7 +34,7 @@ A high-performance FastAPI ML service for predicting Titanic passenger survival 
 ### Local Development
 ```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install -r ../requirements.txt
 
 # Start development server
 python main.py
@@ -305,7 +305,7 @@ curl -X GET "http://localhost:8000/models/info" \
 FROM python:3.11-slim
 COPY . /app
 WORKDIR /app
-RUN pip install -r requirements.txt
+RUN pip install -r ../requirements.txt
 CMD ["python", "main.py"]
 ```
 
@@ -717,7 +717,7 @@ git clone <repository-url>
 cd 2-ml-service
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r ../requirements.txt
 
 # Verify installation
 python main.py --help

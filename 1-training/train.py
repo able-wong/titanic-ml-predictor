@@ -29,7 +29,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from shared.preprocessor import TitanicPreprocessor
 
-warnings.filterwarnings('ignore')
+# Suppress specific warnings that are expected in ML training
+warnings.filterwarnings('ignore', category=FutureWarning, module='sklearn')
+warnings.filterwarnings('ignore', category=UserWarning, message='X does not have valid feature names')
 
 # Configuration constants
 RANDOM_STATE = 42
@@ -122,10 +124,10 @@ def save_models(models, results):
     lr_model, dt_model = models
     
     # Save models
-    with open(f'{MODELS_DIR}/logistic_model.pkl', 'wb') as f:
+    with open(os.path.join(MODELS_DIR, 'logistic_model.pkl'), 'wb') as f:
         pickle.dump(lr_model, f)
         
-    with open(f'{MODELS_DIR}/decision_tree_model.pkl', 'wb') as f:
+    with open(os.path.join(MODELS_DIR, 'decision_tree_model.pkl'), 'wb') as f:
         pickle.dump(dt_model, f)
     
     # Save evaluation results

@@ -10,8 +10,7 @@ Tests complete API functionality including:
 - Prediction endpoints
 """
 
-import pytest
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import patch, AsyncMock
 from contextlib import contextmanager
 from fastapi import status
 
@@ -195,7 +194,7 @@ class TestPredictionEndpoints:
     
     def test_prediction_with_valid_auth(self, app_client, valid_passenger_data, mock_auth_headers):
         """Test prediction endpoint with valid authentication."""
-        with authenticated_request(app_client) as mock_service:
+        with authenticated_request(app_client):
             response = app_client.post("/predict", json=valid_passenger_data, headers=mock_auth_headers)
             
             assert response.status_code == status.HTTP_200_OK

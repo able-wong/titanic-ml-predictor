@@ -38,6 +38,24 @@ api:
     - "http://localhost:3000"
     - "http://localhost:8000"
 
+# Rate Limiting Configuration
+rate_limiting:
+  # Storage backend for rate limiting
+  # Options: "memory", "redis"
+  storage_backend: memory
+  
+  # Redis configuration (used when storage_backend is "redis")
+  redis:
+    url: "redis://localhost:6379/0"
+    # Alternative: set via environment variable REDIS_URL
+    
+  # Rate limits for different endpoint types
+  limits:
+    default: "100/minute"
+    predictions: "50/minute"  # More restrictive for ML predictions
+    health: "200/minute"      # More lenient for health checks
+    auth: "20/minute"         # Conservative for auth operations
+
 # Logging Configuration
 logging:
   level: INFO

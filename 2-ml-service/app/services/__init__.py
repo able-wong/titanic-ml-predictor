@@ -11,10 +11,10 @@ from .health_checker import health_checker, HealthStatus, HealthCheck
 from .lazy_ml_service import fast_ml_service, LazyMLService, FastMLService
 
 __all__ = [
-    'health_checker',
-    'HealthStatus',
-    'HealthCheck',
-    'fast_ml_service',
-    'LazyMLService',
-    'FastMLService'
+    "health_checker",
+    "HealthStatus",
+    "HealthCheck",
+    "fast_ml_service",
+    "LazyMLService",
+    "FastMLService",
 ]

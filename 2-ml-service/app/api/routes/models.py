@@ -21,7 +21,7 @@ async def model_info(request: Request):
             "feature_columns": ml_service.get_feature_columns(),
             "model_accuracy": ml_service.model_accuracy,
             "model_types": ["logistic_regression", "decision_tree", "ensemble"],
-            "loading_mode": "lazy"
+            "loading_mode": "lazy",
         }
     except Exception as e:
         logger.error(f"Model info failed: {str(e)}")
