@@ -1,192 +1,136 @@
-# Training Pipeline - Titanic Survival Prediction
+# Training Pipeline
 
-This directory contains the production training pipeline for the Titanic ML Predictor Platform. It processes the Titanic dataset, trains machine learning models, and generates production-ready model artifacts.
+Machine learning model training pipeline for Titanic survival prediction using shared preprocessing components.
 
 ## Overview
 
-The training pipeline implements:
-- **Data Processing**: Cleans and preprocesses the Titanic dataset with feature engineering
-- **Model Training**: Trains Logistic Regression and Decision Tree algorithms  
-- **Model Persistence**: Saves all trained models and preprocessing components
-- **Interactive Testing**: CLI tool for validating model predictions
+This module contains the training pipeline that:
+- Uses the shared `TitanicPreprocessor` for consistent data transformation
+- Trains multiple ML models (Logistic Regression, Decision Tree)
+- Evaluates model performance and generates metrics
+- Saves trained models and artifacts for the API service
 
 ## Quick Start
 
-### 1. Install Dependencies
-
 ```bash
-pip install -r requirements.txt
-```
+# From project root
+./doit.sh train
 
-### 2. Train Models
-
-```bash
+# Or directly
+cd 1-training
 python train.py
 ```
 
-This will:
-- Load data from `../data/titanic passenger list.csv`
-- Process and split the data (80/20 train/test)
-- Train Logistic Regression and Decision Tree models
-- Save all model artifacts to the project root `../models/` directory
-- Display training results and accuracy metrics
+## Training Process
 
-### 3. Test Models
+### 1. Data Loading
+- Loads training data from `../data/train.csv`
+- Handles missing data and basic validation
 
+### 2. Preprocessing
+- Uses shared `TitanicPreprocessor` class
+- Feature engineering (age groups, fare categories, family size)
+- Label encoding for categorical variables
+- Consistent transformation pipeline used by API service
+
+### 3. Model Training
+- **Logistic Regression**: Linear model with regularization
+- **Decision Tree**: Non-linear model with depth limiting
+- Uses `RANDOM_STATE = 42` for reproducible results
+
+### 4. Model Evaluation
+- Train/test split for validation
+- Accuracy scoring for both models
+- Classification reports with precision, recall, F1-score
+- Confusion matrices for detailed performance analysis
+
+### 5. Artifact Generation
+- **Model Files**: `logistic_model.pkl`, `decision_tree_model.pkl`
+- **Preprocessor**: Label encoders and preprocessing statistics
+- **Evaluation Results**: JSON file with model performance metrics
+- **Feature Info**: Feature column names and transformations
+
+## Output Files
+
+Generated in `../models/` directory:
+```
+models/
+├── logistic_model.pkl        # Trained logistic regression model
+├── decision_tree_model.pkl   # Trained decision tree model  
+├── label_encoders.pkl        # Label encoders for categorical features
+├── evaluation_results.json   # Model performance metrics
+└── preprocessing_stats.json  # Feature statistics and transformations
+```
+
+## Configuration
+
+Key training parameters in `train.py`:
+```python
+RANDOM_STATE = 42           # Reproducible results
+TEST_SIZE = 0.2             # 20% held out for validation
+MAX_DEPTH = 5               # Decision tree depth limit
+MODELS_DIR = "../models"    # Output directory
+```
+
+## Model Performance
+
+Typical performance metrics:
+- **Logistic Regression**: ~80-82% accuracy
+- **Decision Tree**: ~78-85% accuracy
+- **Ensemble Average**: Often provides best results
+
+## Integration with API Service
+
+The trained models are automatically compatible with the FastAPI service:
+- **Shared Preprocessor**: Ensures consistent data transformation
+- **Model Loading**: API service loads models from `../models/`
+- **Feature Compatibility**: Same feature engineering pipeline
+- **Prediction Format**: Compatible prediction output structure
+
+## Dependencies
+
+Uses consolidated project dependencies from `../requirements.txt`:
+- `pandas`, `numpy` for data manipulation
+- `scikit-learn` for ML models and evaluation
+- `pickle` for model serialization
+- Shared `TitanicPreprocessor` component
+
+## Troubleshooting
+
+### Common Issues
+
+**Missing Data Files**:
 ```bash
-python test_models.py
+# Ensure training data exists
+ls ../data/train.csv
 ```
 
-Interactive CLI tool that allows you to:
-- Input passenger information manually
-- Get survival predictions from individual models
-- See ensemble prediction results
-- View confidence levels for predictions
-
-## Generated Model Artifacts
-
-After running `train.py`, the following files are created in the project root `../models/` directory:
-
-- **`logistic_model.pkl`** - Trained Logistic Regression model
-- **`decision_tree_model.pkl`** - Trained Decision Tree model  
-- **`label_encoders.pkl`** - Encoders for categorical variables (sex, embarked)
-- **`preprocessing_stats.json`** - Statistics for handling missing values
-- **`feature_columns.json`** - Ordered list of feature columns
-- **`evaluation_results.json`** - Model accuracy and performance metrics
-
-## Data Processing Pipeline
-
-### Data Cleaning
-- Removes unnecessary columns (name, ticket, cabin, boat, body, home.dest)
-- Handles missing values:
-  - Age: filled with median
-  - Embarked: filled with mode (most common value)
-  - Fare: filled with median
-
-### Feature Engineering
-- **family_size**: Total family members aboard (siblings + spouses + parents + children + 1)
-- **is_alone**: Binary indicator for passengers traveling alone
-- **age_group**: Age categories (Child: 0-17, Young Adult: 18-34, Adult: 35-59, Senior: 60+)
-
-### Encoding
-- **sex**: male=1, female=0
-- **embarked**: C/Q/S encoded to numeric values
-
-## Model Architecture
-
-### Algorithms Used
-1. **Logistic Regression**: Interpretable linear model for baseline performance
-2. **Decision Tree**: Non-linear model to capture complex patterns
-3. **Ensemble**: Averages probabilities from both models for final prediction
-
-### Model Parameters
-- **Logistic Regression**: `random_state=42, max_iter=1000`
-- **Decision Tree**: `random_state=42, max_depth=10, min_samples_split=20`
-
-## Example Usage
-
-### Training Output
-```
-🚢 TITANIC SURVIVAL PREDICTION - PRODUCTION TRAINING PIPELINE 🚢
-===============================================================================
-Loading data from ../data/titanic passenger list.csv...
-Data loaded successfully. Shape: (1309, 14)
-Survival rate: 0.381
-
-Starting data preprocessing...
-Handling missing values...
-Creating engineered features...
-Encoding categorical variables...
-Preprocessing complete. Final shape: (1309, 11)
-
-Features used: ['pclass', 'sex', 'age', 'sibsp', 'parch', 'fare', 'embarked', 'family_size', 'is_alone', 'age_group']
-Dataset shape: (1309, 10)
-
-Splitting data (test_size=0.2)...
-Training set: 1047 samples
-Test set: 262 samples
-
-Training models...
-Training Logistic Regression...
-Training Decision Tree...
-Model training complete!
-
-Evaluating models...
-Logistic Regression Accuracy: 0.817
-Decision Tree Accuracy: 0.809
-Ensemble Accuracy: 0.821
-
-Saving models to models/...
-All model artifacts saved successfully!
-
-===============================================================================
-🎉 TRAINING PIPELINE COMPLETED SUCCESSFULLY!
-===============================================================================
-```
-
-### Testing Interface
+**Import Errors**:
 ```bash
-$ python test_models.py
-
-🚢 TITANIC SURVIVAL PREDICTION - MODEL TESTING CLI 🚢
-===============================================================================
-
-ENTER PASSENGER INFORMATION
-===============================================================================
-Passenger Class (1=First, 2=Second, 3=Third): 1
-Sex (male/female): female  
-Age (years): 25
-Siblings/Spouses aboard: 0
-Parents/Children aboard: 0
-Fare paid: 50.0
-Embarked (C=Cherbourg, Q=Queenstown, S=Southampton): S
-
-PREDICTION RESULTS
-===============================================================================
-Logistic Regression:
-  Survival Probability: 0.892 (89.2%)
-  Prediction: SURVIVED
-
-Decision Tree:
-  Survival Probability: 0.847 (84.7%)
-  Prediction: SURVIVED
-
-🎯 ENSEMBLE PREDICTION:
-  Survival Probability: 0.869 (86.9%)
-  Final Prediction: ✅ SURVIVED
-  Confidence Level: High (0.739)
+# Install dependencies
+pip install -r ../requirements.txt
 ```
 
-## Technical Specifications
+**Model Directory Permissions**:
+```bash
+# Create models directory if missing
+mkdir -p ../models
+```
 
-- **Python**: 3.9+ compatibility
-- **Random State**: Fixed at 42 for reproducible results
-- **Train/Test Split**: 80/20 with stratification
-- **Missing Value Strategy**: Median for numeric, mode for categorical
-- **Feature Selection**: Automated based on preprocessing pipeline
-- **Model Serialization**: Pickle format for Python compatibility
+### Validation
 
-## Integration with ML Service
+Verify successful training:
+```bash
+# Check generated files
+ls -la ../models/
+# Should see .pkl and .json files
 
-The generated model artifacts are designed to be consumed by the ML Service component:
-- All preprocessing logic is saved and reusable
-- Models are serialized in a consistent format
-- Feature ordering is preserved for prediction consistency
-- Evaluation metrics are available for monitoring
-
-## Error Handling
-
-The pipeline includes comprehensive error handling for:
-- Missing data files
-- Invalid data formats  
-- Model training failures
-- File I/O operations
-- User input validation (in testing tool)
-
-## Next Steps
-
-After training models:
-1. Use the generated artifacts in the ML Service (`2-ml-service/`)
-2. Deploy models to production environment
-3. Monitor model performance and retrain as needed
-4. Implement A/B testing for model improvements
+# Validate model loading (from 2-ml-service)
+cd ../2-ml-service
+python -c "
+from app.services.ml_service import MLService
+service = MLService()
+service.load_models()
+print('✅ Models load successfully')
+"
+```

@@ -1,58 +1,51 @@
-# Titanic ML Prediction API - Production Ready
+# FastAPI ML Service
 
-A high-performance FastAPI ML service for predicting Titanic passenger survival with production-grade features and optimized startup performance.
+High-performance FastAPI service for real-time Titanic survival predictions with production-grade features.
 
-## 🚀 Performance Optimized
-
-| Metric | Value | Optimization |
-|--------|--------|--------------|
-| **Cold Start** | ~0.17ms | 99.9% faster with lazy loading ⚡ |
-| **First Prediction** | ~1-2s | Models load on first use |
-| **Warm Predictions** | ~50-100ms | Cached models |
-| **Memory Usage** | Efficient | Lazy loading reduces peak usage |
-
-## 🏗️ Architecture
+## 🏗️ Architecture Overview
 
 ### Lazy Loading Design
-- **Startup**: Ultra-fast validation only (~0.17ms)
-- **First Request**: Models load automatically (~1-2s) 
-- **Subsequent Requests**: Use cached models (~50ms)
-- **Container Reuse**: Excellent warm start performance
+- **Ultra-fast startup** (~0.17ms) with validation-only initialization
+- **On-demand model loading** (~1-2s) on first prediction request
+- **Cached performance** (~50-100ms) for subsequent predictions
+- **Memory efficient** with lazy loading strategy
 
 ### Production Features
-- ✅ **JWT Authentication** with RS256
-- ✅ **Rate Limiting** with Redis backend
-- ✅ **Input Validation** with XSS/SQL injection prevention
-- ✅ **Structured Logging** with request tracing
-- ✅ **Health Monitoring** with startup vs runtime checks
-- ✅ **Error Handling** with custom exception classes
-- ✅ **Comprehensive Testing** (unit + integration)
-- ✅ **Performance Monitoring** ready
+- **JWT Authentication**: RS256 with configurable expiration
+- **Rate Limiting**: Configurable memory/Redis backends
+- **Input Validation**: XSS/SQL injection prevention
+- **Health Monitoring**: Startup and runtime health checks
+- **Structured Logging**: Request tracing and audit trails
+- **Error Handling**: Custom exception classes with proper HTTP status codes
 
-## 🔧 Quick Start
+## 🚀 Quick Start
 
-### Local Development
 ```bash
-# Install dependencies
-pip install -r ../requirements.txt
+# From project root
+./doit.sh python-service-start
 
-# Start development server
+# Or directly
+cd 2-ml-service
 python main.py
 
-# API available at http://localhost:8000
-# Docs at http://localhost:8000/docs
+# API: http://localhost:8000
+# Docs: http://localhost:8000/docs
 ```
 
-### Testing
+## 🧪 Testing
+
+See [tests/README.md](tests/README.md) for comprehensive test documentation.
+
 ```bash
 # Run all tests
-python run_tests.py all
+./doit.sh python-service-tests
+# or: python run_tests.py all
 
-# Run with coverage
-python run_tests.py coverage
+# Unit tests only  
+python -m pytest tests/unit/
 
-# Run unit tests only
-python run_tests.py unit
+# Integration tests only
+python -m pytest tests/integration/
 ```
 
 ## 📚 API Endpoints
