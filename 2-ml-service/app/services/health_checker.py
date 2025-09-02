@@ -290,12 +290,17 @@ class EnhancedHealthChecker:
                     jwt_issues.append("algorithm_missing")
 
             details = {
-                "environment": config.environment if hasattr(config, "environment") else "unknown",
-                "critical_sections_available": len(critical_sections) - len(missing_sections),
+                "environment": config.environment
+                if hasattr(config, "environment")
+                else "unknown",
+                "critical_sections_available": len(critical_sections)
+                - len(missing_sections),
                 "critical_sections_total": len(critical_sections),
                 "missing_sections": missing_sections,
                 "jwt_configuration": {
-                    "algorithm": config.jwt.algorithm if hasattr(config, "jwt") else None,
+                    "algorithm": config.jwt.algorithm
+                    if hasattr(config, "jwt")
+                    else None,
                     "issues": jwt_issues,
                 },
             }
@@ -346,7 +351,10 @@ class EnhancedHealthChecker:
             disk_critical_threshold = 98.0
 
             details = {
-                "cpu": {"usage_percent": round(cpu_percent, 1), "cores": psutil.cpu_count()},
+                "cpu": {
+                    "usage_percent": round(cpu_percent, 1),
+                    "cores": psutil.cpu_count(),
+                },
                 "memory": {
                     "usage_percent": round(memory.percent, 1),
                     "total_gb": round(memory.total / (1024**3), 2),

@@ -64,7 +64,9 @@ class MLServiceError(Exception):
 class ValidationError(MLServiceError):
     """Exception for input validation errors."""
 
-    def __init__(self, message: str, field_errors: Dict[str, List[str]] = None, **kwargs):
+    def __init__(
+        self, message: str, field_errors: Dict[str, List[str]] = None, **kwargs
+    ):
         details = kwargs.pop("details", {})
         if field_errors:
             details["field_errors"] = field_errors
@@ -83,7 +85,9 @@ class ModelNotLoadedError(MLServiceError):
 
     def __init__(self, model_name: str = None, **kwargs):
         message = (
-            f"ML model '{model_name}' is not loaded" if model_name else "ML models are not loaded"
+            f"ML model '{model_name}' is not loaded"
+            if model_name
+            else "ML models are not loaded"
         )
         details = kwargs.get("details", {})
         if model_name:
@@ -101,7 +105,9 @@ class ModelNotLoadedError(MLServiceError):
 class PredictionError(MLServiceError):
     """Exception for prediction computation errors."""
 
-    def __init__(self, message: str, model_name: str = None, status_code: int = None, **kwargs):
+    def __init__(
+        self, message: str, model_name: str = None, status_code: int = None, **kwargs
+    ):
         details = kwargs.pop("details", {})
         if model_name:
             details["model_name"] = model_name
@@ -121,13 +127,17 @@ class PredictionError(MLServiceError):
 class PredictionInputError(PredictionError):
     """Exception for prediction input validation errors."""
 
-    def __init__(self, message: str, field_errors: Dict[str, List[str]] = None, **kwargs):
+    def __init__(
+        self, message: str, field_errors: Dict[str, List[str]] = None, **kwargs
+    ):
         details = kwargs.get("details", {})
         if field_errors:
             details["field_errors"] = field_errors
 
         kwargs["details"] = details
-        super().__init__(message=message, status_code=status.HTTP_400_BAD_REQUEST, **kwargs)
+        super().__init__(
+            message=message, status_code=status.HTTP_400_BAD_REQUEST, **kwargs
+        )
         self.error_code = "PREDICTION_INPUT_ERROR"
 
 
@@ -159,7 +169,9 @@ class AuthenticationError(MLServiceError):
 class AuthorizationError(MLServiceError):
     """Exception for authorization errors."""
 
-    def __init__(self, message: str = "Access denied", required_permission: str = None, **kwargs):
+    def __init__(
+        self, message: str = "Access denied", required_permission: str = None, **kwargs
+    ):
         details = kwargs.get("details", {})
         if required_permission:
             details["required_permission"] = required_permission
@@ -194,7 +206,11 @@ class ExternalServiceError(MLServiceError):
     """Exception for external service integration errors."""
 
     def __init__(
-        self, message: str, service_name: str = None, service_status: int = None, **kwargs
+        self,
+        message: str,
+        service_name: str = None,
+        service_status: int = None,
+        **kwargs,
     ):
         details = kwargs.get("details", {})
         if service_name:
@@ -256,13 +272,18 @@ def create_error_response(
         error_details["traceback"] = traceback.format_exc()
 
     error_detail = ErrorDetail(
-        error_code=error_code, message=message, details=error_details, request_id=request_id
+        error_code=error_code,
+        message=message,
+        details=error_details,
+        request_id=request_id,
     )
 
     return HTTPException(status_code=status_code, detail=error_detail.dict())
 
 
-def handle_pydantic_validation_error(exc: Exception, request_id: str = None) -> HTTPException:
+def handle_pydantic_validation_error(
+    exc: Exception, request_id: str = None
+) -> HTTPException:
     """
     Convert Pydantic validation errors to standardized format.
 

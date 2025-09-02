@@ -67,7 +67,9 @@ logger = get_logger("prediction_routes")
                     "example": {
                         "error_code": "PREDICTION_INPUT_ERROR",
                         "message": "Invalid input data: age must be between 0 and 120",
-                        "details": {"field_errors": {"age": ["Must be between 0 and 120"]}},
+                        "details": {
+                            "field_errors": {"age": ["Must be between 0 and 120"]}
+                        },
                         "request_id": "req_123",
                         "timestamp": "2025-09-02T15:36:30.030Z",
                     }

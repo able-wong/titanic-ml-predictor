@@ -6,7 +6,7 @@ for distributed rate limiting across multiple service instances.
 """
 
 import time
-from typing import Dict, Optional
+from typing import Dict
 from fastapi import Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -77,21 +77,21 @@ class RateLimiterConfig:
         """Ensure configuration is loaded."""
         if not self._initialized:
             try:
-                if hasattr(config_manager, '_config') and config_manager._config:
+                if hasattr(config_manager, "_config") and config_manager._config:
                     self.config = config_manager._config
                     rate_config = self.config.rate_limiting
-                    
+
                     # Load rate limits from config
                     self.default_rate_limit = rate_config.limits.default
                     self.prediction_limit = rate_config.limits.predictions
                     self.health_limit = rate_config.limits.health
                     self.auth_limit = rate_config.limits.auth
-                    
+
                     # Load storage configuration
                     self.storage_backend = rate_config.storage_backend
                     if self.storage_backend == "redis":
                         self.redis_url = rate_config.redis.url
-                    
+
                     self._initialized = True
             except (RuntimeError, AttributeError):
                 # Configuration not available (e.g., during testing)
@@ -105,7 +105,7 @@ class RateLimiterConfig:
             str: Storage URI for rate limiting backend
         """
         self._ensure_initialized()
-        
+
         if self.storage_backend == "redis" and self.redis_url:
             return self.redis_url
         else:
@@ -169,7 +169,11 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
     response_data = {
         "error": "RateLimitExceeded",
         "message": f"Rate limit exceeded: {exc.detail}",
-        "details": {"limit": str(exc.limit), "retry_after": retry_after, "limit_key": limit_key},
+        "details": {
+            "limit": str(exc.limit),
+            "retry_after": retry_after,
+            "limit_key": limit_key,
+        },
     }
 
     # Create JSON response with retry headers

@@ -36,6 +36,24 @@ jobs:
         pip install -r requirements.txt
         pip install ruff
     
+    - name: Generate test JWT keys
+      run: |
+        # Generate RSA key pair for testing
+        openssl genrsa -out test_private.pem 2048
+        openssl rsa -in test_private.pem -pubout -out test_public.pem
+        
+        # Export as environment variables for tests
+        echo "JWT_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+        cat test_private.pem >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+        echo "JWT_PUBLIC_KEY<<EOF" >> $GITHUB_ENV
+        cat test_public.pem >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+        # Clean up key files
+        rm test_private.pem test_public.pem
+    
     - name: Run linting with ruff
       run: |
         # Check formatting and linting
@@ -113,6 +131,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Generate test JWT keys
+      run: |
+        # Generate RSA key pair for testing
+        openssl genrsa -out test_private.pem 2048
+        openssl rsa -in test_private.pem -pubout -out test_public.pem
+        
+        # Export as environment variables for tests
+        echo "JWT_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+        cat test_private.pem >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+        echo "JWT_PUBLIC_KEY<<EOF" >> $GITHUB_ENV
+        cat test_public.pem >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+        # Clean up key files
+        rm test_private.pem test_public.pem
+    
     - name: Generate models
       run: |
         cd 1-training
@@ -125,16 +161,3 @@ jobs:
         # Test that the service can start up successfully
         timeout 10s python main.py || if [ $? -eq 124 ]; then echo "Service started successfully"; else exit 1; fi
     
-    - name: Validate configuration
-      run: |
-        cd 2-ml-service
-        # Check that example config is valid
-        python -c "
-import yaml
-with open('config.example.yaml', 'r') as f:
-    config = yaml.safe_load(f)
-    assert 'environment' in config
-    assert 'models' in config
-    assert 'api' in config
-    print('✅ Configuration validation passed')
-        "

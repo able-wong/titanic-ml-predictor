@@ -55,6 +55,9 @@ models/
 # PyTorch
 *.pth
 
+# Security scan reports
+bandit_report.json
+
 # Data files (optional - uncomment if data should not be tracked)
 # *.csv
 # data/

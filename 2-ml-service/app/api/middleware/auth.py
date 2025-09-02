@@ -75,7 +75,9 @@ class AuthService:
 
         try:
             # Encode token with private key
-            encoded_jwt = jwt.encode(to_encode, self.private_key, algorithm=self.algorithm)
+            encoded_jwt = jwt.encode(
+                to_encode, self.private_key, algorithm=self.algorithm
+            )
 
             self.logger.debug(
                 "Access token created successfully",
@@ -132,7 +134,9 @@ class AuthService:
             user_id = payload.get("user_id")
             if user_id is None:
                 self.structured_logger.authentication_event(
-                    event_type="token_verification", success=False, error_reason="missing_user_id"
+                    event_type="token_verification",
+                    success=False,
+                    error_reason="missing_user_id",
                 )
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -159,7 +163,9 @@ class AuthService:
 
         except jwt.ExpiredSignatureError:
             self.structured_logger.authentication_event(
-                event_type="token_verification", success=False, error_reason="token_expired"
+                event_type="token_verification",
+                success=False,
+                error_reason="token_expired",
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -250,7 +256,9 @@ async def verify_jwt_token(
         )
 
 
-async def get_current_user(token_data: TokenData = Depends(verify_jwt_token)) -> Dict[str, Any]:
+async def get_current_user(
+    token_data: TokenData = Depends(verify_jwt_token),
+) -> Dict[str, Any]:
     """
     FastAPI dependency to get current user information.
 

@@ -25,7 +25,9 @@ class JWTConfig(BaseModel):
     """JWT authentication configuration."""
 
     algorithm: str = Field(default="RS256", description="JWT algorithm")
-    access_token_expire_minutes: int = Field(default=60, description="Token expiration in minutes")
+    access_token_expire_minutes: int = Field(
+        default=60, description="Token expiration in minutes"
+    )
     private_key: str = Field(..., description="RSA private key for signing tokens")
     public_key: str = Field(..., description="RSA public key for verifying tokens")
 
@@ -33,10 +35,12 @@ class JWTConfig(BaseModel):
 class APIConfig(BaseModel):
     """API server configuration."""
 
-    host: str = Field(default="0.0.0.0", description="Server host")
+    host: str = Field(default="127.0.0.1", description="Server host")
     port: int = Field(default=8000, description="Server port")
     reload: bool = Field(default=True, description="Enable auto-reload for development")
-    rate_limit: str = Field(default="100/minute", description="Rate limiting configuration")
+    rate_limit: str = Field(
+        default="100/minute", description="Rate limiting configuration"
+    )
     cors_origins: List[str] = Field(
         default=["http://localhost:3000"], description="CORS allowed origins"
     )
@@ -47,7 +51,8 @@ class LoggingConfig(BaseModel):
 
     level: str = Field(default="INFO", description="Log level")
     format: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s", description="Log format"
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        description="Log format",
     )
 
 
@@ -65,15 +70,21 @@ class HealthConfig(BaseModel):
 class RateLimitingRedisConfig(BaseModel):
     """Redis configuration for rate limiting."""
 
-    url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
+    url: str = Field(
+        default="redis://localhost:6379/0", description="Redis connection URL"
+    )
 
 
 class RateLimitingLimitsConfig(BaseModel):
     """Rate limit values for different endpoint types."""
 
     default: str = Field(default="100/minute", description="Default rate limit")
-    predictions: str = Field(default="50/minute", description="Rate limit for ML predictions")
-    health: str = Field(default="200/minute", description="Rate limit for health checks")
+    predictions: str = Field(
+        default="50/minute", description="Rate limit for ML predictions"
+    )
+    health: str = Field(
+        default="200/minute", description="Rate limit for health checks"
+    )
     auth: str = Field(default="20/minute", description="Rate limit for auth operations")
 
 
@@ -109,33 +120,58 @@ class ConfigManager:
 
     def load_config(self) -> Config:
         """
-        Load configuration from YAML file with environment variable overrides.
+        Load configuration with the following priority:
+        1. Environment variables (highest priority)
+        2. config.yaml file (if exists)
+        3. Default configuration (fallback)
+
+        This approach works for local dev, CI/CD, and production deployments.
 
         Returns:
             Config: Loaded and validated configuration
 
         Raises:
-            FileNotFoundError: If config file doesn't exist
             Exception: If config is invalid
         """
-        if not os.path.exists(self.config_file):
-            raise FileNotFoundError(
-                f"Configuration file '{self.config_file}' not found. "
-                f"Copy 'config.example.yaml' to '{self.config_file}' and update it."
-            )
+        config_data = None
+        config_source = None
+
+        # Start with defaults
+        config_data = self._get_default_config()
+        config_source = "defaults"
+
+        # Override with config file if it exists
+        if os.path.exists(self.config_file):
+            try:
+                with open(self.config_file, "r") as f:
+                    file_config = yaml.safe_load(f)
+                    # Deep merge file config into defaults
+                    config_data = self._deep_merge(config_data, file_config)
+                    config_source = f"{self.config_file}"
+            except Exception as e:
+                print(f"⚠️  Warning: Could not load {self.config_file}: {e}")
+                # Continue with defaults
 
         try:
-            # Load YAML configuration
-            with open(self.config_file, "r") as f:
-                config_data = yaml.safe_load(f)
-
-            # Apply environment variable overrides
+            # Apply environment variable overrides (highest priority)
             config_data = self._apply_env_overrides(config_data)
+
+            # Check if we have minimal required config
+            if not self._has_required_config(config_data):
+                # For local development, provide helpful message
+                if not os.getenv("JWT_PRIVATE_KEY") and not os.path.exists(
+                    self.config_file
+                ):
+                    print(
+                        f"💡 Tip: For local development, copy 'config.example.yaml' to '{self.config_file}'"
+                    )
 
             # Validate and create config object
             self._config = Config(**config_data)
 
-            print(f"✅ Configuration loaded from {self.config_file}")
+            print(
+                f"✅ Configuration loaded from {config_source} + environment overrides"
+            )
             print(f"📝 Environment: {self._config.environment}")
 
             return self._config
@@ -179,6 +215,75 @@ class ConfigManager:
                     current[final_key] = env_value
 
         return config_data
+
+    def _deep_merge(
+        self, base: Dict[str, Any], override: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Deep merge two dictionaries, with override taking precedence."""
+        result = base.copy()
+
+        for key, value in override.items():
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
+                result[key] = self._deep_merge(result[key], value)
+            else:
+                result[key] = value
+
+        return result
+
+    def _has_required_config(self, config_data: Dict[str, Any]) -> bool:
+        """Check if we have the minimal required configuration."""
+        # Check for JWT keys (required for authentication)
+        jwt_config = config_data.get("jwt", {})
+        has_keys = bool(jwt_config.get("private_key") and jwt_config.get("public_key"))
+
+        # In production/testing, we should have real keys from env vars
+        # In local dev, config.yaml should provide them
+        return has_keys
+
+    def _get_default_config(self) -> Dict[str, Any]:
+        """Get default configuration for CI/testing mode."""
+        return {
+            "environment": "testing",
+            "models": {
+                "path": "../models",
+                "preprocessor_path": "../models",
+                "cache_enabled": True,
+            },
+            "jwt": {
+                "algorithm": "RS256",
+                "access_token_expire_minutes": 60,
+                # JWT keys should be provided via environment variables
+                # For local testing, use config.yaml or set JWT_PRIVATE_KEY and JWT_PUBLIC_KEY
+                "private_key": "",
+                "public_key": "",
+            },
+            "api": {
+                "host": "127.0.0.1",
+                "port": 8000,
+                "reload": False,  # Disable reload in testing
+                "rate_limit": "100/minute",
+                "cors_origins": ["http://localhost:3000"],
+            },
+            "logging": {
+                "level": "INFO",
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            },
+            "health": {"include_model_accuracy": True, "include_feature_info": True},
+            "rate_limiting": {
+                "storage_backend": "memory",  # Always use memory for testing
+                "redis": {"url": "redis://localhost:6379/0"},
+                "limits": {
+                    "default": "1000/minute",  # Higher limits for testing
+                    "predictions": "500/minute",
+                    "health": "2000/minute",
+                    "auth": "200/minute",
+                },
+            },
+        }
 
     @property
     def config(self) -> Config:

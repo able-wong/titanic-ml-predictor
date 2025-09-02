@@ -30,7 +30,7 @@ jwt:
 
 # API Configuration
 api:
-  host: "0.0.0.0"
+  host: "127.0.0.1"  # Use 0.0.0.0 only in containerized/production environments
   port: 8000
   reload: true
   rate_limit: 100/minute

@@ -40,7 +40,8 @@ class InputSanitizer:
                 re.IGNORECASE,
             ),
             "xss_patterns": re.compile(
-                r"(<script|<iframe|<object|<embed|javascript:|vbscript:|on\w+\s*=)", re.IGNORECASE
+                r"(<script|<iframe|<object|<embed|javascript:|vbscript:|on\w+\s*=)",
+                re.IGNORECASE,
             ),
             "suspicious_chars": re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]"),
             "excessive_whitespace": re.compile(r"\s{10,}"),  # 10+ consecutive spaces
@@ -97,7 +98,9 @@ class InputSanitizer:
 
         # 2. Check for SQL injection patterns
         if self.patterns["sql_injection"].search(value):
-            logger.warning("SQL injection attempt detected", field=field_name, pattern_matched=True)
+            logger.warning(
+                "SQL injection attempt detected", field=field_name, pattern_matched=True
+            )
             raise ValidationError(
                 message=f"Field '{field_name}' contains invalid content",
                 details={"field": field_name, "issue": "invalid_characters"},
@@ -105,7 +108,9 @@ class InputSanitizer:
 
         # 3. Check for XSS patterns
         if self.patterns["xss_patterns"].search(value):
-            logger.warning("XSS attempt detected", field=field_name, pattern_matched=True)
+            logger.warning(
+                "XSS attempt detected", field=field_name, pattern_matched=True
+            )
             raise ValidationError(
                 message=f"Field '{field_name}' contains invalid content",
                 details={"field": field_name, "issue": "invalid_characters"},
@@ -137,7 +142,11 @@ class InputSanitizer:
             )
             raise ValidationError(
                 message=f"Field '{field_name}' is too long",
-                details={"field": field_name, "max_length": 100, "actual_length": len(value)},
+                details={
+                    "field": field_name,
+                    "max_length": 100,
+                    "actual_length": len(value),
+                },
             )
 
         return value
@@ -209,7 +218,11 @@ class InputSanitizer:
         if value not in valid_values:
             raise ValidationError(
                 message=f"Field '{field_name}' has invalid value",
-                details={"field": field_name, "value": value, "valid_values": list(valid_values)},
+                details={
+                    "field": field_name,
+                    "value": value,
+                    "valid_values": list(valid_values),
+                },
             )
 
         return value
@@ -277,7 +290,9 @@ class InputSanitizer:
             # Sanitize string fields
             for field in ["sex", "embarked"]:
                 if field in passenger_data:
-                    sanitized_value = self.sanitize_string(str(passenger_data[field]), field)
+                    sanitized_value = self.sanitize_string(
+                        str(passenger_data[field]), field
+                    )
                     sanitized_data[field] = sanitized_value
 
             # Validate and sanitize numeric fields
@@ -315,7 +330,9 @@ class InputSanitizer:
             # Validate categorical fields
             for field in ["sex", "embarked", "pclass"]:
                 if field in sanitized_data:
-                    sanitized_data[field] = self.validate_categorical(sanitized_data[field], field)
+                    sanitized_data[field] = self.validate_categorical(
+                        sanitized_data[field], field
+                    )
 
             # Detect and log anomalies
             anomalies = self.detect_anomalies(sanitized_data)
@@ -344,7 +361,9 @@ class InputSanitizer:
                 error_type=type(e).__name__,
                 error_message=str(e),
             )
-            raise ValidationError(message="Input validation failed", details={"error": str(e)})
+            raise ValidationError(
+                message="Input validation failed", details={"error": str(e)}
+            )
 
 
 # Global sanitizer instance

@@ -6,7 +6,7 @@ by deferring expensive operations until they're actually needed.
 """
 
 import os
-import pickle
+import pickle  # nosec B403 - used only for internal ML model files
 import json
 from typing import Dict, Any
 from functools import lru_cache
@@ -111,7 +111,7 @@ class LazyMLService:
 
                 def load_model(filepath):
                     with open(filepath, "rb") as f:
-                        return pickle.load(f)
+                        return pickle.load(f)  # nosec B301 - internal model files only
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
                     # Submit loading tasks
@@ -119,7 +119,8 @@ class LazyMLService:
                         load_model, os.path.join(self.models_dir, "logistic_model.pkl")
                     )
                     dt_future = executor.submit(
-                        load_model, os.path.join(self.models_dir, "decision_tree_model.pkl")
+                        load_model,
+                        os.path.join(self.models_dir, "decision_tree_model.pkl"),
                     )
                     encoders_future = executor.submit(
                         load_model, os.path.join(self.models_dir, "label_encoders.pkl")
@@ -163,7 +164,11 @@ class LazyMLService:
 
             except Exception as e:
                 self.logger.warning(f"Could not load model accuracy: {str(e)}")
-                return {"logistic_regression": 0.83, "decision_tree": 0.80, "ensemble": 0.82}
+                return {
+                    "logistic_regression": 0.83,
+                    "decision_tree": 0.80,
+                    "ensemble": 0.82,
+                }
 
     @property
     def preprocessor(self):
@@ -203,7 +208,9 @@ class LazyMLService:
             "model_accuracy": self.model_accuracy,
         }
 
-    async def predict_survival(self, passenger_data: Dict[str, Any]) -> PredictionResponse:
+    async def predict_survival(
+        self, passenger_data: Dict[str, Any]
+    ) -> PredictionResponse:
         """
         Make prediction with lazy model loading.
 
@@ -307,7 +314,9 @@ class FastMLService:
 
         # Just validate directory exists
         if not os.path.exists(self._delegate.models_dir):
-            raise ConfigurationError(f"Models directory not found: {self._delegate.models_dir}")
+            raise ConfigurationError(
+                f"Models directory not found: {self._delegate.models_dir}"
+            )
 
         self.logger.info(
             "ML service ready for lazy loading",
@@ -315,7 +324,9 @@ class FastMLService:
             models_dir=self._delegate.models_dir,
         )
 
-    async def predict_survival(self, passenger_data: Dict[str, Any]) -> PredictionResponse:
+    async def predict_survival(
+        self, passenger_data: Dict[str, Any]
+    ) -> PredictionResponse:
         """Make prediction (models loaded on first call)."""
         return await self._delegate.predict_survival(passenger_data)
 
