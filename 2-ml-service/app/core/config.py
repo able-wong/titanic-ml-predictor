@@ -135,11 +135,11 @@ class ConfigManager:
         """
         config_data = None
         config_source = None
-        
+
         # Start with defaults
         config_data = self._get_default_config()
         config_source = "defaults"
-        
+
         # Override with config file if it exists
         if os.path.exists(self.config_file):
             try:
@@ -151,21 +151,27 @@ class ConfigManager:
             except Exception as e:
                 print(f"⚠️  Warning: Could not load {self.config_file}: {e}")
                 # Continue with defaults
-        
+
         try:
             # Apply environment variable overrides (highest priority)
             config_data = self._apply_env_overrides(config_data)
-            
+
             # Check if we have minimal required config
             if not self._has_required_config(config_data):
                 # For local development, provide helpful message
-                if not os.getenv("JWT_PRIVATE_KEY") and not os.path.exists(self.config_file):
-                    print(f"💡 Tip: For local development, copy 'config.example.yaml' to '{self.config_file}'")
-            
+                if not os.getenv("JWT_PRIVATE_KEY") and not os.path.exists(
+                    self.config_file
+                ):
+                    print(
+                        f"💡 Tip: For local development, copy 'config.example.yaml' to '{self.config_file}'"
+                    )
+
             # Validate and create config object
             self._config = Config(**config_data)
 
-            print(f"✅ Configuration loaded from {config_source} + environment overrides")
+            print(
+                f"✅ Configuration loaded from {config_source} + environment overrides"
+            )
             print(f"📝 Environment: {self._config.environment}")
 
             return self._config
@@ -210,24 +216,30 @@ class ConfigManager:
 
         return config_data
 
-    def _deep_merge(self, base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    def _deep_merge(
+        self, base: Dict[str, Any], override: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Deep merge two dictionaries, with override taking precedence."""
         result = base.copy()
-        
+
         for key, value in override.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._deep_merge(result[key], value)
             else:
                 result[key] = value
-        
+
         return result
-    
+
     def _has_required_config(self, config_data: Dict[str, Any]) -> bool:
         """Check if we have the minimal required configuration."""
         # Check for JWT keys (required for authentication)
         jwt_config = config_data.get("jwt", {})
         has_keys = bool(jwt_config.get("private_key") and jwt_config.get("public_key"))
-        
+
         # In production/testing, we should have real keys from env vars
         # In local dev, config.yaml should provide them
         return has_keys
@@ -238,8 +250,8 @@ class ConfigManager:
             "environment": "testing",
             "models": {
                 "path": "../models",
-                "preprocessor_path": "../models", 
-                "cache_enabled": True
+                "preprocessor_path": "../models",
+                "cache_enabled": True,
             },
             "jwt": {
                 "algorithm": "RS256",
@@ -247,35 +259,30 @@ class ConfigManager:
                 # JWT keys should be provided via environment variables
                 # For local testing, use config.yaml or set JWT_PRIVATE_KEY and JWT_PUBLIC_KEY
                 "private_key": "",
-                "public_key": ""
+                "public_key": "",
             },
             "api": {
                 "host": "127.0.0.1",
                 "port": 8000,
                 "reload": False,  # Disable reload in testing
                 "rate_limit": "100/minute",
-                "cors_origins": ["http://localhost:3000"]
+                "cors_origins": ["http://localhost:3000"],
             },
             "logging": {
                 "level": "INFO",
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             },
-            "health": {
-                "include_model_accuracy": True,
-                "include_feature_info": True
-            },
+            "health": {"include_model_accuracy": True, "include_feature_info": True},
             "rate_limiting": {
                 "storage_backend": "memory",  # Always use memory for testing
-                "redis": {
-                    "url": "redis://localhost:6379/0"
-                },
+                "redis": {"url": "redis://localhost:6379/0"},
                 "limits": {
                     "default": "1000/minute",  # Higher limits for testing
                     "predictions": "500/minute",
-                    "health": "2000/minute", 
-                    "auth": "200/minute"
-                }
-            }
+                    "health": "2000/minute",
+                    "auth": "200/minute",
+                },
+            },
         }
 
     @property
