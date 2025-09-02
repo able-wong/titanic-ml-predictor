@@ -24,7 +24,7 @@ python train.py
 ## Training Process
 
 ### 1. Data Loading
-- Loads training data from `../data/train.csv`
+- Loads training data from `../data/titanic passenger list.csv`
 - Handles missing data and basic validation
 
 ### 2. Preprocessing
@@ -58,6 +58,7 @@ models/
 ├── logistic_model.pkl        # Trained logistic regression model
 ├── decision_tree_model.pkl   # Trained decision tree model  
 ├── label_encoders.pkl        # Label encoders for categorical features
+├── feature_columns.json      # Ordered list of feature names
 ├── evaluation_results.json   # Model performance metrics
 └── preprocessing_stats.json  # Feature statistics and transformations
 ```
@@ -102,7 +103,7 @@ Uses consolidated project dependencies from `../requirements.txt`:
 **Missing Data Files**:
 ```bash
 # Ensure training data exists
-ls ../data/train.csv
+ls ../data/"titanic passenger list.csv"
 ```
 
 **Import Errors**:
@@ -128,9 +129,10 @@ ls -la ../models/
 # Validate model loading (from 2-ml-service)
 cd ../2-ml-service
 python -c "
+import asyncio
 from app.services.ml_service import MLService
 service = MLService()
-service.load_models()
+asyncio.run(service.load_models())
 print('✅ Models load successfully')
 "
 ```

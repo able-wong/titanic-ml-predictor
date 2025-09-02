@@ -40,8 +40,8 @@ titanic-ml-predictor/
 │   └── README.md            # Service-specific documentation
 │
 ├── 📊 data/                 # Training data (CSV files)
-│   ├── train.csv
-│   └── test.csv
+│   ├── titanic passenger list.csv
+│   └── Titanic-Dataset.csv
 │
 ├── 🤖 models/              # Generated ML artifacts (from training)
 │   ├── *.pkl               # Trained model files
