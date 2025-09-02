@@ -20,15 +20,17 @@ shared/         → Common preprocessing utilities
 ./doit.sh python-security-scan  # Security analysis
 
 # GitHub operations - always use gh CLI
-gh pr view <PR> --comments      # Pull PR comments
+gh pr view <PR> --comments      # Example: gh pr view 123 --comments
 gh pr create --title "..." --body "..."
 ```
 
 ## Testing
 ```bash
-# Generate JWT keys first
+# 1. Generate JWT keys (only needs to be done once per shell session)
 source scripts/generate_test_keys.sh
-pytest tests/
+
+# 2. Run the test suite
+./doit.sh python-service-tests
 ```
 
 ## Important Rules
