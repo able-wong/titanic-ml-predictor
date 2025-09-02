@@ -1,0 +1,67 @@
+# FastAPI ML Service Configuration Template
+# Copy this to config.yaml and update with your actual values
+
+environment: development
+
+# Model and preprocessing paths
+models:
+  path: ../models              # Shared models directory
+  preprocessor_path: ../models # Same location for preprocessor artifacts
+  cache_enabled: true
+
+# JWT Authentication Configuration
+jwt:
+  algorithm: RS256
+  access_token_expire_minutes: 60
+  
+  # RSA Private Key for signing tokens
+  # IMPORTANT: Replace with your actual private key
+  private_key: |
+    -----BEGIN PRIVATE KEY-----
+    REPLACE_WITH_YOUR_ACTUAL_PRIVATE_KEY
+    -----END PRIVATE KEY-----
+  
+  # RSA Public Key for verifying tokens
+  # IMPORTANT: Replace with your actual public key
+  public_key: |
+    -----BEGIN PUBLIC KEY-----
+    REPLACE_WITH_YOUR_ACTUAL_PUBLIC_KEY
+    -----END PUBLIC KEY-----
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  rate_limit: 100/minute
+  cors_origins: 
+    - "http://localhost:3000"
+    - "http://localhost:8000"
+
+# Rate Limiting Configuration
+rate_limiting:
+  # Storage backend for rate limiting
+  # Options: "memory", "redis"
+  storage_backend: memory
+  
+  # Redis configuration (used when storage_backend is "redis")
+  redis:
+    url: "redis://localhost:6379/0"
+    # Alternative: set via environment variable REDIS_URL
+    
+  # Rate limits for different endpoint types
+  limits:
+    default: "100/minute"
+    predictions: "50/minute"  # More restrictive for ML predictions
+    health: "200/minute"      # More lenient for health checks
+    auth: "20/minute"         # Conservative for auth operations
+
+# Logging Configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Health Check Configuration
+health:
+  include_model_accuracy: true
+  include_feature_info: true
