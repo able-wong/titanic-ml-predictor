@@ -51,6 +51,7 @@ Available Commands:
   train                 Train the ML models using the training pipeline
   lint                  Run ruff linting on all Python code
   lint-fix              Run ruff with --fix to automatically fix issues
+  python-security-scan  Run security vulnerability scan on Python code
   python-service-tests  Run the comprehensive test suite for the ML service
   python-service-start  Start the FastAPI ML service
   install-deps          Install all dependencies for training and service
@@ -123,6 +124,49 @@ cmd_lint_fix() {
         print_error "Code linting fixes failed"
         exit 1
     fi
+}
+
+cmd_python_security_scan() {
+    print_header "Running Python Security Scan"
+    print_info "Scanning Python code for security vulnerabilities..."
+    
+    cd "$PROJECT_ROOT"
+    
+    # Check if bandit is installed
+    if ! command -v bandit &> /dev/null; then
+        print_info "Installing bandit security scanner..."
+        pip install bandit
+    fi
+    
+    # Run safety check for known vulnerabilities in dependencies
+    print_info "Checking dependencies for known vulnerabilities with safety..."
+    if command -v safety &> /dev/null; then
+        safety check --json || print_warning "Some dependency vulnerabilities found"
+    else
+        print_info "Installing safety scanner..."
+        pip install safety
+        safety check --json || print_warning "Some dependency vulnerabilities found"
+    fi
+    
+    # Run bandit security linter on Python code
+    print_info "Running bandit security analysis on Python code..."
+    
+    bandit_exit_code=0
+    bandit -r 1-training/ 2-ml-service/ shared/ -f json > bandit_report.json || bandit_exit_code=$?
+    
+    if [ $bandit_exit_code -eq 0 ]; then
+        print_success "No security issues found in Python code"
+    else
+        print_warning "Security issues found - check bandit_report.json for details"
+        # Show summary but don't fail the build
+        if command -v jq &> /dev/null; then
+            echo ""
+            print_info "Security Issues Summary:"
+            jq -r '.results[] | "⚠️  \(.filename):\(.line_number) - \(.issue_text)"' bandit_report.json || true
+        fi
+    fi
+    
+    print_success "Python security scan completed"
 }
 
 cmd_python_service_tests() {
@@ -218,6 +262,10 @@ main() {
         "lint-fix")
             shift
             cmd_lint_fix "$@"
+            ;;
+        "python-security-scan")
+            shift
+            cmd_python_security_scan "$@"
             ;;
         "python-service-tests")
             shift

@@ -6,7 +6,7 @@ by deferring expensive operations until they're actually needed.
 """
 
 import os
-import pickle
+import pickle  # nosec B403 - used only for internal ML model files
 import json
 from typing import Dict, Any
 from functools import lru_cache
@@ -111,7 +111,7 @@ class LazyMLService:
 
                 def load_model(filepath):
                     with open(filepath, "rb") as f:
-                        return pickle.load(f)
+                        return pickle.load(f)  # nosec B301 - internal model files only
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
                     # Submit loading tasks
