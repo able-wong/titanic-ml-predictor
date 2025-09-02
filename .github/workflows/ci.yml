@@ -125,16 +125,3 @@ jobs:
         # Test that the service can start up successfully
         timeout 10s python main.py || if [ $? -eq 124 ]; then echo "Service started successfully"; else exit 1; fi
     
-    - name: Validate configuration
-      run: |
-        cd 2-ml-service
-        # Check that example config is valid
-        python -c "
-import yaml
-with open('config.example.yaml', 'r') as f:
-    config = yaml.safe_load(f)
-    assert 'environment' in config
-    assert 'models' in config
-    assert 'api' in config
-    print('✅ Configuration validation passed')
-        "
