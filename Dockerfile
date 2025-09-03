@@ -53,8 +53,9 @@ COPY --chown=app:app 2-ml-service/ ./
 # Switch to non-root user
 USER app
 
-# Set PATH to include user-local binaries  
+# Set PATH to include user-local binaries and PYTHONPATH for proper imports
 ENV PATH="/home/app/.local/bin:$PATH"
+ENV PYTHONPATH="/app:/shared:/models"
 
 # Expose ports for both Firebase Functions and direct Docker usage
 EXPOSE 8080 8000

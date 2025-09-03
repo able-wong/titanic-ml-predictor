@@ -221,7 +221,7 @@ class TestPredictionEndpoints:
     def test_prediction_with_valid_auth(
         self, app_client, valid_passenger_data, mock_auth_headers
     ):
-        """Test prediction endpoint with valid authentication."""
+        """Test prediction endpoint with valid authentication (mocked ML service)."""
         with authenticated_request(app_client):
             response = app_client.post(
                 "/predict", json=valid_passenger_data, headers=mock_auth_headers
@@ -234,6 +234,49 @@ class TestPredictionEndpoints:
             assert "ensemble_result" in data
             assert "logistic_regression" in data["individual_models"]
             assert "decision_tree" in data["individual_models"]
+
+    def test_prediction_with_real_ml_service(
+        self, app_client, valid_passenger_data, mock_auth_headers
+    ):
+        """Test prediction endpoint with real ML service (no mocking)."""
+        # This test uses the actual ML service to catch integration bugs
+        with authenticated_request(app_client, mock_ml_service=False):
+            response = app_client.post(
+                "/predict", json=valid_passenger_data, headers=mock_auth_headers
+            )
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+
+            # Verify complete response structure
+            assert "individual_models" in data
+            assert "ensemble_result" in data
+
+            # Verify individual model predictions
+            individual = data["individual_models"]
+            assert "logistic_regression" in individual
+            assert "decision_tree" in individual
+
+            for model_name, prediction in individual.items():
+                assert "probability" in prediction
+                assert "prediction" in prediction
+                assert isinstance(prediction["probability"], (int, float))
+                assert prediction["prediction"] in ["survived", "did_not_survive"]
+                assert 0.0 <= prediction["probability"] <= 1.0
+
+            # Verify ensemble prediction
+            ensemble = data["ensemble_result"]
+            assert "probability" in ensemble
+            assert "prediction" in ensemble
+            assert "confidence" in ensemble
+            assert "confidence_level" in ensemble
+
+            assert isinstance(ensemble["probability"], (int, float))
+            assert ensemble["prediction"] in ["survived", "did_not_survive"]
+            assert isinstance(ensemble["confidence"], (int, float))
+            assert ensemble["confidence_level"] in ["low", "medium", "high"]
+            assert 0.0 <= ensemble["probability"] <= 1.0
+            assert 0.0 <= ensemble["confidence"] <= 1.0
 
     def test_prediction_input_validation(
         self, app_client, mock_auth_headers, invalid_passenger_data

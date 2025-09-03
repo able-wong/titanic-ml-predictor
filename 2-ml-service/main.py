@@ -236,7 +236,6 @@ app.include_router(predictions_router)
 app.include_router(models_router)
 
 
-
 if __name__ == "__main__":
     import uvicorn
     import signal
@@ -253,7 +252,7 @@ if __name__ == "__main__":
 
     # Check if running in containerized environment (Cloud Run, Docker, etc.)
     port = int(os.getenv("PORT", 8000))
-    
+
     # Use 0.0.0.0 for containerized deployments (Cloud Run, Docker)
     # Use 127.0.0.1 only for local development
     ml_env = os.getenv("ML_SERVICE_ENVIRONMENT", "development")
@@ -264,5 +263,8 @@ if __name__ == "__main__":
         # Local development
         host = "127.0.0.1"
 
+    # Enable reload for local development, disable for containerized deployments
+    reload_enabled = ml_env == "development" and not os.getenv("PORT")
+    
     print("🚀 Starting optimized Titanic ML API...")
-    uvicorn.run("main:app", host=host, port=port, reload=False, log_level="info")
+    uvicorn.run("main:app", host=host, port=port, reload=reload_enabled, log_level="info")

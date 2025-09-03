@@ -556,10 +556,34 @@ cmd_cloud_build() {
         print_info "Branch: $CURRENT_BRANCH"
     fi
     
-    # Generate image tag (use provided tag or git commit hash)
-    if [ -n "$1" ] && [ "$1" != "--" ]; then
-        TAG="$1"
-    else
+    # Parse arguments more robustly
+    TAG=""
+    BUILD_METHOD="local"  # default to local build
+    
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --cloud)
+                BUILD_METHOD="cloud"
+                ;;
+            --local)
+                BUILD_METHOD="local"
+                ;;
+            --*)
+                print_warning "Unknown flag: $1"
+                ;;
+            *)
+                if [ -z "$TAG" ]; then
+                    TAG="$1"
+                else
+                    print_warning "Ignoring extra argument: $1"
+                fi
+                ;;
+        esac
+        shift
+    done
+    
+    # Generate default tag if none provided
+    if [ -z "$TAG" ]; then
         # Use first 10 chars of git commit hash as default tag
         FULL_SHA=$(git rev-parse HEAD 2>/dev/null)
         if [ -n "$FULL_SHA" ]; then
@@ -580,7 +604,7 @@ cmd_cloud_build() {
     print_info "Image URL: $IMAGE_URL"
     
     # Option 1: Use Cloud Build (when --cloud flag is specified)
-    if [ "$2" = "--cloud" ]; then
+    if [ "$BUILD_METHOD" = "cloud" ]; then
         print_info "Building with Cloud Build (this may take a few minutes)..."
         gcloud builds submit \
             --tag $IMAGE_URL \

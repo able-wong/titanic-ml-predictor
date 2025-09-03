@@ -182,10 +182,22 @@ class ConfigManager:
 
     def _apply_env_overrides(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
         """Apply environment variable overrides to configuration."""
-        # Environment variable mapping
+        # Check for Firebase Functions config format first
+        try:
+            # Firebase Functions config is available via functions.config()
+            # But we'll use environment variables as they're more reliable
+            import importlib.util
+
+            if importlib.util.find_spec("functions_framework"):
+                pass  # Functions framework is available
+        except ImportError:
+            pass
+
+        # Environment variable mapping (supports both direct env vars and Firebase Functions)
         env_mappings = {
             "ML_SERVICE_HOST": ["api", "host"],
             "ML_SERVICE_PORT": ["api", "port"],
+            "PORT": ["api", "port"],  # Firebase Functions uses PORT
             "ML_SERVICE_ENVIRONMENT": ["environment"],
             "ML_MODELS_PATH": ["models", "path"],
             "JWT_PRIVATE_KEY": ["jwt", "private_key"],
