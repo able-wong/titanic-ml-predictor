@@ -78,18 +78,35 @@ pip install -r requirements.txt
 ```
 
 #### 2. JWT Authentication Setup (Local Development)
-For local development, you need JWT keys to test authenticated endpoints:
+Generate JWT keys for all environments (dev/staging/production):
 
 ```bash
-# Generate test JWT keys for development
-source scripts/generate_test_keys.sh
+# Generate keys for all environments (one-time setup)
+./doit.sh generate-secrets
+
+# Export dev keys to your shell session (needed each time)
+./doit.sh use-dev-secrets
 
 # Start API service with JWT authentication
 ./doit.sh python-service-start
 
-# Test the service
+# Test the service (public endpoint)
 curl http://localhost:8000/health
+
+# Generate a JWT token for testing authenticated endpoints
+python 2-ml-service/scripts/generate_jwt.py --user-id test_user
+
+# Test authenticated endpoint (use the token from above)
+curl -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"pclass": 1, "sex": "female", "age": 29, "sibsp": 0, "parch": 0, "fare": 100, "embarked": "S"}' \
+  http://localhost:8000/predict
 ```
+
+**Benefits of this approach:**
+- **Consistent keys** across development sessions
+- **Same keys** used for staging/production (in separate environments)
+- **No regeneration** needed between restarts
 
 #### 3. Google Cloud Platform Setup (Production Deployment)
 
@@ -176,8 +193,12 @@ After setup, verify everything works:
 
 # Cloud deployment
 ./doit.sh cloud-status         # Shows service status and URL
-curl <staging-url>/health      # Health check responds
+curl $(./doit.sh cloud-status | grep "URL:" | awk '{print $2}')/health  # Health check responds
 ```
+
+Your deployed services will be available at URLs like:
+- **Staging**: `https://titanic-ml-service-<random-id>.us-central1.run.app`
+- **Production**: `https://titanic-ml-service-<random-id>.us-central1.run.app`
 
 ## 🛠️ Development Commands (`doit.sh`)
 

@@ -311,26 +311,41 @@ curl -X GET "http://localhost:8000/models/info" \
 
 ## 🐳 Deployment Options
 
-### Docker
-```dockerfile
-FROM python:3.11-slim
-COPY . /app
-WORKDIR /app
-RUN pip install -r ../requirements.txt
-CMD ["python", "main.py"]
-```
-
-### Firebase Functions
-The service is optimized for serverless deployment:
+### Google Cloud Run (Recommended)
+The service is optimized for Cloud Run deployment:
 - Ultra-fast cold starts (<500ms)
 - Efficient memory usage with lazy loading
 - Automatic scaling and container reuse
+- Built-in HTTPS and custom domains
 
-### Cloud Run / AWS Lambda
-Production-ready for any serverless platform with:
-- Fast startup times
-- Stateless design
-- Efficient resource usage
+Deploy using the project automation:
+```bash
+# Setup GCP projects and deploy
+./doit.sh env-switch staging
+./doit.sh gcp-setup
+./doit.sh setup-secrets
+./doit.sh cloud-build
+./doit.sh cloud-deploy
+```
+
+### Docker (Local Development)
+```bash
+# Build image
+docker build -t titanic-ml-service .
+
+# Run container
+docker run -p 8000:8000 \
+  -e JWT_PRIVATE_KEY="$(cat secrets/stg/jwt_private.pem)" \
+  -e JWT_PUBLIC_KEY="$(cat secrets/stg/jwt_public.pem)" \
+  titanic-ml-service
+```
+
+### Other Serverless Platforms
+The service is production-ready for any serverless platform:
+- AWS Lambda with Function URLs
+- Azure Container Instances
+- Heroku Container Registry
+- Any Kubernetes cluster
 
 ## 📊 Monitoring & Observability
 

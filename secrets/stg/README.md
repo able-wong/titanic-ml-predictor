@@ -16,7 +16,7 @@ JWT_PRIVATE_KEY=$(cat secrets/stg/jwt_private.pem) \
 
 ### Deploy to staging:
 ```bash
-gcloud config configurations activate staging
+./doit.sh env-switch staging
 ./doit.sh cloud-deploy
 ```
 
