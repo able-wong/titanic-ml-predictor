@@ -1,0 +1,133 @@
+name: Deploy ML Service to Cloud Run
+
+on:
+  push:
+    branches: [main, prd]
+    paths:
+      - '2-ml-service/**'
+      - 'shared/**'
+      - 'models/**'
+      - 'requirements*.txt'
+      - 'Dockerfile'
+      - '.github/workflows/deploy-ml-service.yml'
+  pull_request:
+    branches: [main, prd]
+    paths:
+      - '2-ml-service/**'
+      - 'shared/**'
+      - 'models/**'
+      - 'requirements*.txt'
+      - 'Dockerfile'
+
+env:
+  REGISTRY: us-central1-docker.pkg.dev
+  SERVICE_NAME: ml-service
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate test JWT keys
+        run: |
+          chmod +x scripts/generate_test_keys.sh
+          source scripts/generate_test_keys.sh
+
+      - name: Run tests
+        run: ./doit.sh python-service-tests
+
+      - name: Run linting
+        run: ./doit.sh lint-check
+
+      - name: Run security scan
+        run: ./doit.sh python-security-scan
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prd')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine deployment environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=stg" >> $GITHUB_OUTPUT
+            echo "project_id=titanic-ml-predictor-stg" >> $GITHUB_OUTPUT
+            echo "env_name=Staging" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/prd" ]]; then
+            echo "environment=prd" >> $GITHUB_OUTPUT
+            echo "project_id=titanic-ml-predictor-prd" >> $GITHUB_OUTPUT
+            echo "env_name=Production" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.env.outputs.environment == 'stg' && secrets.GCP_SA_KEY_STG || secrets.GCP_SA_KEY_PRD }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker to use gcloud as a credential helper
+        run: gcloud auth configure-docker ${{ env.REGISTRY }}
+
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/ml-service/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          echo "Building image for ${{ steps.env.outputs.env_name }}: $IMAGE_TAG"
+          docker build --platform linux/amd64 -t $IMAGE_TAG .
+
+      - name: Push Docker image
+        run: |
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/ml-service/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          echo "Pushing image: $IMAGE_TAG"
+          docker push $IMAGE_TAG
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/ml-service/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          
+          echo "Deploying to ${{ steps.env.outputs.env_name }}:"
+          echo "  Project: ${{ steps.env.outputs.project_id }}"
+          echo "  Service: ${{ env.SERVICE_NAME }}"
+          echo "  Image: $IMAGE_TAG"
+          
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image $IMAGE_TAG \
+            --project ${{ steps.env.outputs.project_id }} \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars ML_SERVICE_ENVIRONMENT=${{ steps.env.outputs.environment }} \
+            --memory 2Gi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --port 8000 \
+            --timeout 300
+
+      - name: Get service URL
+        id: service-url
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --project ${{ steps.env.outputs.project_id }} \
+            --region us-central1 \
+            --format 'value(status.url)')
+          echo "🚀 ${{ steps.env.outputs.env_name }} deployment completed: $URL"
+          echo "url=$URL" >> $GITHUB_OUTPUT

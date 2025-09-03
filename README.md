@@ -56,9 +56,15 @@ titanic-ml-predictor/
 ### Prerequisites
 - Python 3.11+ 
 - Git
+- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (for deployment)
+- [GitHub CLI](https://cli.github.com/) (for repository management)
 - Virtual environment (recommended)
 
-### Setup
+### Initial Setup
+
+After cloning the repository, follow these steps to get the project fully operational:
+
+#### 1. Basic Development Setup
 ```bash
 # Clone repository
 git clone https://github.com/able-wong/titanic-ml-predictor.git
@@ -67,11 +73,110 @@ cd titanic-ml-predictor
 # Install dependencies (consolidated requirements)
 pip install -r requirements.txt
 
-# Train models
+# Train models (required before starting service)
 ./doit.sh train
+```
 
-# Start API service
+#### 2. JWT Authentication Setup (Local Development)
+For local development, you need JWT keys to test authenticated endpoints:
+
+```bash
+# Generate test JWT keys for development
+source scripts/generate_test_keys.sh
+
+# Start API service with JWT authentication
 ./doit.sh python-service-start
+
+# Test the service
+curl http://localhost:8000/health
+```
+
+#### 3. Google Cloud Platform Setup (Production Deployment)
+
+To deploy to Google Cloud Run, set up your GCP environment:
+
+```bash
+# 1. Initialize gcloud CLI and authenticate
+gcloud init
+gcloud auth login
+gcloud auth application-default login
+
+# 2. Create staging and production projects
+gcloud projects create titanic-ml-predictor-stg --name="Titanic ML Staging"
+gcloud projects create titanic-ml-predictor-prd --name="Titanic ML Production"
+
+# 3. Enable billing and APIs for both projects
+# (Follow GCP console prompts for billing)
+
+# 4. Set up GCP services and artifact registry
+./doit.sh env-switch staging
+./doit.sh gcp-setup
+
+./doit.sh env-switch prd
+./doit.sh gcp-setup
+
+# 5. Upload JWT secrets to both environments
+./doit.sh env-switch staging
+./doit.sh setup-secrets
+
+./doit.sh env-switch prd  
+./doit.sh setup-secrets
+```
+
+#### 4. Manual Deployment (Optional)
+Test manual deployment before setting up CI/CD:
+
+```bash
+# Deploy to staging
+./doit.sh env-switch staging
+./doit.sh cloud-build
+./doit.sh cloud-deploy
+
+# Deploy to production  
+./doit.sh env-switch prd
+./doit.sh cloud-build
+./doit.sh cloud-deploy
+```
+
+#### 5. GitHub Actions CI/CD Setup
+For automated deployments via GitHub Actions:
+
+```bash
+# 1. Create service accounts and keys for both environments
+./doit.sh github-actions-setup
+
+# 2. Add GitHub repository secrets:
+#    - Go to GitHub repo → Settings → Secrets and variables → Actions
+#    - Add these secrets:
+#      * GCP_SA_KEY_STG: Contents of github-actions-stg-key.json
+#      * GCP_SA_KEY_PRD: Contents of github-actions-prd-key.json
+
+# 3. Clean up local key files
+rm github-actions-stg-key.json github-actions-prd-key.json
+
+# 4. Create production branch for controlled releases
+git checkout -b prd
+git push -u origin prd
+```
+
+#### 6. CI/CD Workflow
+Once setup is complete, the deployment workflow is:
+
+- **Push to `main`** → Automatically deploys to **staging**
+- **Push to `prd`** → Automatically deploys to **production**
+- **Pull Requests** → Run full test suite without deployment
+
+### Verification
+After setup, verify everything works:
+
+```bash
+# Local development
+./doit.sh python-service-tests  # All tests pass
+./doit.sh python-service-start  # Service starts correctly
+
+# Cloud deployment
+./doit.sh cloud-status         # Shows service status and URL
+curl <staging-url>/health      # Health check responds
 ```
 
 ## 🛠️ Development Commands (`doit.sh`)
@@ -85,15 +190,25 @@ The `doit.sh` script provides convenient automation for common development tasks
 
 # Code Quality
 ./doit.sh lint                     # Run ruff linting
-./doit.sh lint-fix                # Auto-fix linting issues  
+./doit.sh lint-fix                 # Auto-fix linting issues
+./doit.sh python-security-scan     # Run security analysis with bandit
 
 # Testing & Service
 ./doit.sh python-service-tests     # Run comprehensive test suite
 ./doit.sh python-service-start     # Start FastAPI development server
 
-# Setup
+# Cloud Deployment
+./doit.sh env-switch <staging|prd> # Switch between environments
+./doit.sh gcp-setup                # Configure GCP services and registry
+./doit.sh setup-secrets            # Upload JWT keys to Secret Manager
+./doit.sh github-actions-setup     # Create CI/CD service accounts
+./doit.sh cloud-build [tag]        # Build and push Docker image
+./doit.sh cloud-deploy [tag]       # Deploy to Cloud Run
+./doit.sh cloud-status             # Check service status and health
+
+# Setup & Utilities
 ./doit.sh install-deps             # Install all project dependencies
-./doit.sh help                     # Show available commands
+./doit.sh help                     # Show all available commands
 ```
 
 ## 📊 Components
