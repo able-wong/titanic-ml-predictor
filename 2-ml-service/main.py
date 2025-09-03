@@ -1,7 +1,7 @@
 """
-Firebase Functions optimized FastAPI ML Service.
+Production FastAPI ML Service.
 
-This version is optimized for Firebase Functions with:
+This service is optimized for Cloud Run deployment with:
 - Minimal cold start time (<500ms)
 - Lazy loading of ML models
 - Fast startup validation only
@@ -39,11 +39,11 @@ app_config = None
 logger = None
 
 
-# Firebase Functions optimized lifespan
+# Production optimized lifespan
 @asynccontextmanager
-async def firebase_lifespan(app: FastAPI):
+async def production_lifespan(app: FastAPI):
     """
-    Ultra-fast lifespan handler for Firebase Functions.
+    Ultra-fast lifespan handler for production deployment.
 
     Optimizations:
     - No model loading at startup (lazy loading)
@@ -113,7 +113,7 @@ load_app_config()
 
 # Initialize FastAPI app with optimized lifespan and comprehensive OpenAPI documentation
 app = FastAPI(
-    lifespan=firebase_lifespan,
+    lifespan=production_lifespan,
     title="Titanic ML Prediction API",
     description="""
     ## Machine Learning API for Titanic Passenger Survival Prediction
@@ -125,7 +125,7 @@ app = FastAPI(
     - 🚀 **Ultra-fast startup** (~0.17ms cold start)
     - 🔒 **JWT Authentication** with RS256 algorithm
     - 📊 **Dual ML Models** (Logistic Regression + Decision Tree)
-    - ⚡ **Lazy Loading** for optimal Firebase Functions performance
+    - ⚡ **Lazy Loading** for optimal Cloud Run performance
     - 🛡️ **Input Validation** with XSS/SQL injection prevention
     - 📈 **Structured Logging** with request tracing
     - 💚 **Health Monitoring** with detailed system checks
@@ -236,8 +236,33 @@ app.include_router(predictions_router)
 app.include_router(models_router)
 
 
+
 if __name__ == "__main__":
     import uvicorn
+    import signal
+    import sys
+
+    def signal_handler(sig, frame):
+        """Handle shutdown signals gracefully"""
+        print(f"\n🛑 Received signal {sig}, shutting down gracefully...")
+        sys.exit(0)
+
+    # Set up signal handlers for graceful shutdown
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # Check if running in containerized environment (Cloud Run, Docker, etc.)
+    port = int(os.getenv("PORT", 8000))
+    
+    # Use 0.0.0.0 for containerized deployments (Cloud Run, Docker)
+    # Use 127.0.0.1 only for local development
+    ml_env = os.getenv("ML_SERVICE_ENVIRONMENT", "development")
+    if ml_env in ["production", "staging"] or os.getenv("PORT"):
+        # Cloud Run always sets PORT, so this indicates containerized deployment
+        host = "0.0.0.0"  # nosec B104 - Required for containerized deployment
+    else:
+        # Local development
+        host = "127.0.0.1"
 
     print("🚀 Starting optimized Titanic ML API...")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
+    uvicorn.run("main:app", host=host, port=port, reload=False, log_level="info")

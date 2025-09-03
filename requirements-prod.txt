@@ -1,0 +1,32 @@
+# Production requirements for Titanic ML Project
+# These are the minimal dependencies needed to run the ML service in production
+
+# Core ML and data processing (locked versions for consistency)
+numpy==2.3.2
+pandas==2.2.3
+scikit-learn==1.5.2
+
+# FastAPI and web framework
+fastapi==0.104.1
+uvicorn==0.24.0
+
+
+# Authentication
+python-jose[cryptography]==3.3.0
+PyJWT==2.8.0
+python-multipart==0.0.6
+
+# Configuration and utilities
+pydantic==2.5.2
+PyYAML==6.0.1
+psutil==5.9.6
+
+# Logging
+structlog==23.2.0
+
+# Rate limiting
+slowapi==0.1.9
+redis==5.0.1
+
+# HTTP client (for external service calls)
+httpx==0.25.2
