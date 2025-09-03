@@ -992,15 +992,3 @@ cors_origins:
   - "https://your-frontend-domain.com"
 ```
 
-### **Production Deployment Checklist**
-
-- [ ] **Environment Variables**: Set production JWT secrets and configuration
-- [ ] **HTTPS**: Configure SSL/TLS certificates for secure communication
-- [ ] **Monitoring**: Set up logging aggregation and alerting
-- [ ] **Rate Limiting**: Configure Redis backend for distributed rate limiting
-- [ ] **Health Checks**: Implement automated health monitoring and alerting
-- [ ] **Model Updates**: Set up model versioning and deployment pipeline
-- [ ] **Backup & Recovery**: Implement data backup and disaster recovery procedures
-- [ ] **Security**: Enable security headers, input sanitization, and audit logging
-- [ ] **Performance**: Configure auto-scaling based on request volume
-- [ ] **Documentation**: Update API documentation and integration guides
