@@ -70,19 +70,19 @@ jobs:
 
       - name: Build Docker image
         run: |
-          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/ml-service/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/titanic/${{ env.SERVICE_NAME }}:${{ github.sha }}
           echo "Building image for ${{ steps.env.outputs.env_name }}: $IMAGE_TAG"
           docker build --platform linux/amd64 -t $IMAGE_TAG .
 
       - name: Push Docker image
         run: |
-          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/ml-service/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/titanic/${{ env.SERVICE_NAME }}:${{ github.sha }}
           echo "Pushing image: $IMAGE_TAG"
           docker push $IMAGE_TAG
 
       - name: Deploy to Cloud Run
         run: |
-          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/ml-service/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          IMAGE_TAG=${{ env.REGISTRY }}/${{ steps.env.outputs.project_id }}/titanic/${{ env.SERVICE_NAME }}:${{ github.sha }}
           
           echo "Deploying to ${{ steps.env.outputs.env_name }}:"
           echo "  Project: ${{ steps.env.outputs.project_id }}"
