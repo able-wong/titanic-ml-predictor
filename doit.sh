@@ -510,6 +510,28 @@ cmd_github_actions_setup() {
     print_header "Setting up GitHub Actions Service Accounts"
     print_info "Creating service accounts and keys for CI/CD deployment..."
     
+    # Validate prerequisites
+    if ! command -v gcloud >/dev/null 2>&1; then
+        print_error "gcloud CLI not found. Please install Google Cloud SDK first."
+        print_info "Visit: https://cloud.google.com/sdk/docs/install"
+        exit 1
+    fi
+    
+    # Check if user is authenticated
+    if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | head -n1 >/dev/null 2>&1; then
+        print_error "Not authenticated with gcloud. Please run 'gcloud auth login' first."
+        exit 1
+    fi
+    
+    # Check if projects exist
+    for PROJECT in titanic-ml-predictor-stg titanic-ml-predictor-prd; do
+        if ! gcloud projects describe $PROJECT >/dev/null 2>&1; then
+            print_error "Project $PROJECT does not exist."
+            print_info "Create it first with: gcloud projects create $PROJECT"
+            exit 1
+        fi
+    done
+    
     # Create service accounts for both projects (skip if already exist)
     print_info "Creating service account in staging project..."
     gcloud iam service-accounts create github-actions-sa \
@@ -531,41 +553,56 @@ cmd_github_actions_setup() {
         print_info "Setting up permissions for $PROJECT..."
         
         print_info "  Adding Cloud Run Admin role..."
-        gcloud projects add-iam-policy-binding $PROJECT \
+        if ! gcloud projects add-iam-policy-binding $PROJECT \
             --member="serviceAccount:github-actions-sa@$PROJECT.iam.gserviceaccount.com" \
-            --role='roles/run.admin' --quiet >/dev/null || true
-        
-        print_info "  Adding Storage Admin role..."
-        gcloud projects add-iam-policy-binding $PROJECT \
-            --member="serviceAccount:github-actions-sa@$PROJECT.iam.gserviceaccount.com" \
-            --role='roles/storage.admin' --quiet >/dev/null || true
+            --role='roles/run.admin' --quiet >/dev/null 2>&1; then
+            print_warning "Failed to add Cloud Run Admin role to $PROJECT (may already exist)"
+        fi
         
         print_info "  Adding Service Account User role..."
-        gcloud projects add-iam-policy-binding $PROJECT \
+        if ! gcloud projects add-iam-policy-binding $PROJECT \
             --member="serviceAccount:github-actions-sa@$PROJECT.iam.gserviceaccount.com" \
-            --role='roles/iam.serviceAccountUser' --quiet >/dev/null || true
+            --role='roles/iam.serviceAccountUser' --quiet >/dev/null 2>&1; then
+            print_warning "Failed to add Service Account User role to $PROJECT (may already exist)"
+        fi
         
         print_info "  Adding Artifact Registry Writer role..."
-        gcloud projects add-iam-policy-binding $PROJECT \
+        if ! gcloud projects add-iam-policy-binding $PROJECT \
             --member="serviceAccount:github-actions-sa@$PROJECT.iam.gserviceaccount.com" \
-            --role='roles/artifactregistry.writer' --quiet >/dev/null || true
+            --role='roles/artifactregistry.writer' --quiet >/dev/null 2>&1; then
+            print_warning "Failed to add Artifact Registry Writer role to $PROJECT (may already exist)"
+        fi
     done
 
     print_info "Creating service account keys..."
 
     # Create keys for both service accounts
-    if gcloud iam service-accounts keys create github-actions-stg-key.json \
-        --iam-account=github-actions-sa@titanic-ml-predictor-stg.iam.gserviceaccount.com 2>/dev/null; then
-        print_success "Staging key created: github-actions-stg-key.json"
+    STAGING_KEY_FILE="github-actions-stg-key.json"
+    PRODUCTION_KEY_FILE="github-actions-prd-key.json"
+    
+    # Check if key files already exist
+    if [ -f "$STAGING_KEY_FILE" ]; then
+        print_warning "Staging key file already exists: $STAGING_KEY_FILE"
+        print_info "Remove it first if you want to create a new key"
     else
-        print_warning "Failed to create staging key (may already exist)"
+        if gcloud iam service-accounts keys create "$STAGING_KEY_FILE" \
+            --iam-account=github-actions-sa@titanic-ml-predictor-stg.iam.gserviceaccount.com; then
+            print_success "Staging key created: $STAGING_KEY_FILE"
+        else
+            print_error "Failed to create staging key"
+        fi
     fi
 
-    if gcloud iam service-accounts keys create github-actions-prd-key.json \
-        --iam-account=github-actions-sa@titanic-ml-predictor-prd.iam.gserviceaccount.com 2>/dev/null; then
-        print_success "Production key created: github-actions-prd-key.json"
+    if [ -f "$PRODUCTION_KEY_FILE" ]; then
+        print_warning "Production key file already exists: $PRODUCTION_KEY_FILE"
+        print_info "Remove it first if you want to create a new key"
     else
-        print_warning "Failed to create production key (may already exist)"
+        if gcloud iam service-accounts keys create "$PRODUCTION_KEY_FILE" \
+            --iam-account=github-actions-sa@titanic-ml-predictor-prd.iam.gserviceaccount.com; then
+            print_success "Production key created: $PRODUCTION_KEY_FILE"
+        else
+            print_error "Failed to create production key"
+        fi
     fi
 
     print_success "GitHub Actions service account setup completed!"

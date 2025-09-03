@@ -10,22 +10,20 @@ on:
       - 'requirements*.txt'
       - 'Dockerfile'
       - '.github/workflows/deploy-ml-service.yml'
-  pull_request:
-    branches: [main, prd]
-    paths:
-      - '2-ml-service/**'
-      - 'shared/**'
-      - 'models/**'
-      - 'requirements*.txt'
-      - 'Dockerfile'
 
 env:
   REGISTRY: us-central1-docker.pkg.dev
   SERVICE_NAME: ml-service
 
 jobs:
-  test:
+  # Note: This workflow relies on the existing CI Pipeline (ci.yml) for quality gates
+  # The CI pipeline runs lint-and-test, security-scan, and build-test jobs
+  # Only deploy if CI pipeline passes (enforced via GitHub branch protection rules)
+  
+  deploy:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prd')
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,35 +31,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate test JWT keys
+      - name: Generate models for deployment
         run: |
-          chmod +x scripts/generate_test_keys.sh
-          source scripts/generate_test_keys.sh
-
-      - name: Run tests
-        run: ./doit.sh python-service-tests
-
-      - name: Run linting
-        run: ./doit.sh lint-check
-
-      - name: Run security scan
-        run: ./doit.sh python-security-scan
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prd')
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+          cd 1-training
+          python train.py
+          cd ..
 
       - name: Determine deployment environment
         id: env
