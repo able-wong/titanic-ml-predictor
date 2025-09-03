@@ -59,6 +59,7 @@ Available Commands:
   env-switch               Switch between staging/production environments
   setup-secrets            Upload JWT keys to Google Secret Manager
   gcp-setup                Configure Google Cloud Platform for Cloud Run deployment
+  github-actions-setup     Create GitHub Actions service accounts and keys
   cloud-build [tag]        Build Docker image locally and push to Artifact Registry
   cloud-deploy [tag]       Deploy ML service from Artifact Registry
   update-service-secrets   Update Cloud Run to use latest secrets
@@ -502,6 +503,122 @@ cmd_gcp_setup() {
     else
         print_error "GCP setup failed"
         exit 1
+    fi
+}
+
+cmd_github_actions_setup() {
+    print_header "Setting up GitHub Actions Service Accounts"
+    print_info "Creating service accounts and keys for CI/CD deployment..."
+    
+    # Validate prerequisites
+    if ! command -v gcloud >/dev/null 2>&1; then
+        print_error "gcloud CLI not found. Please install Google Cloud SDK first."
+        print_info "Visit: https://cloud.google.com/sdk/docs/install"
+        exit 1
+    fi
+    
+    # Check if user is authenticated
+    if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | head -n1 >/dev/null 2>&1; then
+        print_error "Not authenticated with gcloud. Please run 'gcloud auth login' first."
+        exit 1
+    fi
+    
+    # Check if projects exist
+    for PROJECT in titanic-ml-predictor-stg titanic-ml-predictor-prd; do
+        if ! gcloud projects describe $PROJECT >/dev/null 2>&1; then
+            print_error "Project $PROJECT does not exist."
+            print_info "Create it first with: gcloud projects create $PROJECT"
+            exit 1
+        fi
+    done
+    
+    # Create service accounts for both projects (skip if already exist)
+    print_info "Creating service account in staging project..."
+    gcloud iam service-accounts create github-actions-sa \
+        --display-name='GitHub Actions Service Account' \
+        --project=titanic-ml-predictor-stg 2>/dev/null || print_info "Service account already exists in staging"
+
+    print_info "Creating service account in production project..."
+    gcloud iam service-accounts create github-actions-sa \
+        --display-name='GitHub Actions Service Account' \
+        --project=titanic-ml-predictor-prd 2>/dev/null || print_info "Service account already exists in production"
+
+    print_info "Granting permissions to service accounts..."
+
+    # Wait a bit for service account creation to propagate
+    sleep 3
+
+    # Grant necessary permissions to both service accounts
+    for PROJECT in titanic-ml-predictor-stg titanic-ml-predictor-prd; do
+        print_info "Setting up permissions for $PROJECT..."
+        
+        print_info "  Adding Cloud Run Admin role..."
+        if ! gcloud projects add-iam-policy-binding $PROJECT \
+            --member="serviceAccount:github-actions-sa@$PROJECT.iam.gserviceaccount.com" \
+            --role='roles/run.admin' --quiet >/dev/null 2>&1; then
+            print_warning "Failed to add Cloud Run Admin role to $PROJECT (may already exist)"
+        fi
+        
+        print_info "  Adding Service Account User role..."
+        if ! gcloud projects add-iam-policy-binding $PROJECT \
+            --member="serviceAccount:github-actions-sa@$PROJECT.iam.gserviceaccount.com" \
+            --role='roles/iam.serviceAccountUser' --quiet >/dev/null 2>&1; then
+            print_warning "Failed to add Service Account User role to $PROJECT (may already exist)"
+        fi
+        
+        print_info "  Adding Artifact Registry Writer role..."
+        if ! gcloud projects add-iam-policy-binding $PROJECT \
+            --member="serviceAccount:github-actions-sa@$PROJECT.iam.gserviceaccount.com" \
+            --role='roles/artifactregistry.writer' --quiet >/dev/null 2>&1; then
+            print_warning "Failed to add Artifact Registry Writer role to $PROJECT (may already exist)"
+        fi
+    done
+
+    print_info "Creating service account keys..."
+
+    # Create keys for both service accounts
+    STAGING_KEY_FILE="github-actions-stg-key.json"
+    PRODUCTION_KEY_FILE="github-actions-prd-key.json"
+    
+    # Check if key files already exist
+    if [ -f "$STAGING_KEY_FILE" ]; then
+        print_warning "Staging key file already exists: $STAGING_KEY_FILE"
+        print_info "Remove it first if you want to create a new key"
+    else
+        if gcloud iam service-accounts keys create "$STAGING_KEY_FILE" \
+            --iam-account=github-actions-sa@titanic-ml-predictor-stg.iam.gserviceaccount.com; then
+            print_success "Staging key created: $STAGING_KEY_FILE"
+        else
+            print_error "Failed to create staging key"
+        fi
+    fi
+
+    if [ -f "$PRODUCTION_KEY_FILE" ]; then
+        print_warning "Production key file already exists: $PRODUCTION_KEY_FILE"
+        print_info "Remove it first if you want to create a new key"
+    else
+        if gcloud iam service-accounts keys create "$PRODUCTION_KEY_FILE" \
+            --iam-account=github-actions-sa@titanic-ml-predictor-prd.iam.gserviceaccount.com; then
+            print_success "Production key created: $PRODUCTION_KEY_FILE"
+        else
+            print_error "Failed to create production key"
+        fi
+    fi
+
+    print_success "GitHub Actions service account setup completed!"
+    print_info ""
+    print_info "📝 Next steps:"
+    print_info "1. Add these GitHub repository secrets:"
+    print_info "   - GCP_SA_KEY_STG: Copy contents of github-actions-stg-key.json"
+    print_info "   - GCP_SA_KEY_PRD: Copy contents of github-actions-prd-key.json"
+    print_info ""
+    print_info "2. Clean up key files after adding to GitHub:"
+    print_info "   rm github-actions-stg-key.json github-actions-prd-key.json"
+    print_info ""
+    
+    if [ -f "github-actions-stg-key.json" ] || [ -f "github-actions-prd-key.json" ]; then
+        print_info "Key files created:"
+        ls -la github-actions-*.json 2>/dev/null || true
     fi
 }
 
@@ -985,6 +1102,10 @@ main() {
         "gcp-setup")
             shift
             cmd_gcp_setup "$@"
+            ;;
+        "github-actions-setup")
+            shift
+            cmd_github_actions_setup "$@"
             ;;
         "cloud-build")
             shift
