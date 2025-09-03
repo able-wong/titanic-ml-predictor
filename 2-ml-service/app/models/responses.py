@@ -5,7 +5,7 @@ These models define the structure of API responses, ensuring consistent
 and well-documented output formats.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict
 
 
@@ -69,8 +69,8 @@ class PredictionResponse(BaseModel):
         description="Ensemble prediction with confidence metrics"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "individual_models": {
                     "logistic_regression": {
@@ -90,6 +90,7 @@ class PredictionResponse(BaseModel):
                 }
             }
         }
+    )
 
 
 class HealthResponse(BaseModel):
@@ -104,8 +105,9 @@ class HealthResponse(BaseModel):
         description="Model accuracy metrics from training"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        protected_namespaces=(),  # Disable protected namespaces to allow 'model_' fields
+        json_schema_extra={
             "example": {
                 "status": "healthy",
                 "models_loaded": True,
@@ -117,6 +119,7 @@ class HealthResponse(BaseModel):
                 }
             }
         }
+    )
 
 
 class ErrorResponse(BaseModel):
@@ -126,8 +129,8 @@ class ErrorResponse(BaseModel):
     message: str = Field(..., description="Human-readable error message")
     details: Dict = Field(None, description="Additional error details")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "error": "ValidationError",
                 "message": "Invalid passenger data provided",
@@ -137,3 +140,4 @@ class ErrorResponse(BaseModel):
                 }
             }
         }
+    )

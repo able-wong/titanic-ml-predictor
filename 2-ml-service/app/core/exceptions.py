@@ -57,7 +57,8 @@ class MLServiceError(Exception):
     def to_http_exception(self, request_id: str = None) -> HTTPException:
         """Convert to FastAPI HTTPException."""
         return HTTPException(
-            status_code=self.status_code, detail=self.to_error_detail(request_id).dict()
+            status_code=self.status_code,
+            detail=self.to_error_detail(request_id).model_dump(),
         )
 
 
@@ -189,7 +190,7 @@ class ConfigurationError(MLServiceError):
     """Exception for configuration errors."""
 
     def __init__(self, message: str, config_key: str = None, **kwargs):
-        details = kwargs.get("details", {})
+        details = kwargs.pop("details", {})
         if config_key:
             details["config_key"] = config_key
 
@@ -278,7 +279,7 @@ def create_error_response(
         request_id=request_id,
     )
 
-    return HTTPException(status_code=status_code, detail=error_detail.dict())
+    return HTTPException(status_code=status_code, detail=error_detail.model_dump())
 
 
 def handle_pydantic_validation_error(

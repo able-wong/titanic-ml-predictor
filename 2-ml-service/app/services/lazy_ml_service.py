@@ -222,11 +222,11 @@ class LazyMLService:
             lr_model, dt_model, label_encoders = self._load_models()
 
             # Preprocess data
-            processed_data = preprocessor.preprocess_single(passenger_data)
+            processed_data = preprocessor.preprocess_single_passenger(passenger_data)
 
             # Make predictions
-            lr_prob = lr_model.predict_proba([processed_data])[0][1]
-            dt_prob = dt_model.predict_proba([processed_data])[0][1]
+            lr_prob = lr_model.predict_proba(processed_data)[0][1]
+            dt_prob = dt_model.predict_proba(processed_data)[0][1]
 
             # Calculate ensemble
             ensemble_prob = (lr_prob + dt_prob) / 2

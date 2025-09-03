@@ -3,9 +3,10 @@
 JWT Token Generator for Titanic ML Service
 
 This script generates JWT tokens for testing the authentication system.
-It uses the same configuration and signing keys as the ML service.
+It uses the same configuration and auth services as the ML service.
 
 Usage:
+    cd 2-ml-service
     python scripts/generate_jwt.py --user-id test123 --expires-in 3600
     python scripts/generate_jwt.py --user-id admin --username admin_user --expires-in 7200
 """
@@ -15,16 +16,16 @@ import sys
 import os
 from datetime import timedelta, datetime, timezone
 
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# Add parent directory to path for app imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.config import config_manager
-from app.auth import auth_service
+from app.core.config import config_manager
+from app.api.middleware.auth import auth_service
 
 
 def generate_token(user_id: str, username: str = None, expires_in: int = 3600) -> str:
     """
-    Generate a JWT token for testing.
+    Generate a JWT token using the same auth service as the ML API.
 
     Args:
         user_id (str): User identifier
@@ -42,7 +43,7 @@ def generate_token(user_id: str, username: str = None, expires_in: int = 3600) -
     # Set custom expiration
     expires_delta = timedelta(seconds=expires_in)
 
-    # Generate token
+    # Generate token using the same auth service as the API
     token = auth_service.create_access_token(
         data=token_data, expires_delta=expires_delta
     )
@@ -87,7 +88,7 @@ Examples:
         print("🔑 JWT Token Generator for ML Service")
         print("=" * 50)
 
-        # Load configuration
+        # Load configuration (same as ML service)
         print("Loading configuration...")
         config_manager.load_config()
 
@@ -123,6 +124,9 @@ Examples:
 
     except Exception as e:
         print(f"❌ Error generating token: {str(e)}")
+        print("\n💡 Make sure to run this script from the 2-ml-service directory:")
+        print("  cd 2-ml-service")
+        print("  python scripts/generate_jwt.py --user-id test123")
         sys.exit(1)
 
 

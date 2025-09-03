@@ -58,6 +58,16 @@ models/
 # Security scan reports
 bandit_report.json
 
+# JWT Secrets (keep directory structure, ignore key files)
+secrets/**/*.pem
+secrets/**/*.key
+!secrets/**/README.md
+!secrets/**/.gitkeep
+
+# Temporary JWT keys (if any)
+temp_*.pem
+test_*.pem
+
 # Data files (optional - uncomment if data should not be tracked)
 # *.csv
 # data/

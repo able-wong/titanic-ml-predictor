@@ -145,7 +145,7 @@ async def predict_survival(
         request_id = getattr(request.state, "request_id", None)
 
         # Fast input validation
-        passenger_data = passenger.dict()
+        passenger_data = passenger.model_dump()
         sanitized_data = validate_passenger_input(passenger_data)
 
         # Make prediction (models loaded on first call)
