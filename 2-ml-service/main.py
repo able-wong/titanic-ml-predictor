@@ -265,6 +265,8 @@ if __name__ == "__main__":
 
     # Enable reload for local development, disable for containerized deployments
     reload_enabled = ml_env == "development" and not os.getenv("PORT")
-    
+
     print("🚀 Starting optimized Titanic ML API...")
-    uvicorn.run("main:app", host=host, port=port, reload=reload_enabled, log_level="info")
+    uvicorn.run(
+        "main:app", host=host, port=port, reload=reload_enabled, log_level="info"
+    )
