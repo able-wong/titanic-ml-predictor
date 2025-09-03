@@ -13,7 +13,7 @@ on:
 
 env:
   REGISTRY: us-central1-docker.pkg.dev
-  SERVICE_NAME: ml-service
+  SERVICE_NAME: titanic-ml-service
 
 jobs:
   # Note: This workflow relies on the existing CI Pipeline (ci.yml) for quality gates
