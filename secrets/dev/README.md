@@ -11,9 +11,12 @@ These are the JWT keys for **local development**.
 ### Export keys for local development:
 ```bash
 # Option 1: Use doit.sh command (recommended)
+eval "$(./doit.sh export-dev-secrets)"
+
+# Option 2: Get help with export commands
 ./doit.sh use-dev-secrets
 
-# Option 2: Manual export
+# Option 3: Manual export
 export JWT_PRIVATE_KEY="$(cat secrets/dev/jwt_private.pem)"
 export JWT_PUBLIC_KEY="$(cat secrets/dev/jwt_public.pem)"
 ```
