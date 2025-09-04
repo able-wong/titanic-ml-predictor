@@ -58,7 +58,8 @@ Available Commands:
   docker-start             Start Docker container for the ML service
   env-switch               Switch between staging/production environments
   generate-secrets         Generate JWT keys for all environments (dev/stg/prd)
-  use-dev-secrets          Export dev JWT keys to environment variables
+  use-dev-secrets          Show commands to export dev JWT keys to environment
+  export-dev-secrets       Output export commands for dev keys (used with eval)
   setup-secrets            Upload JWT keys to Google Secret Manager
   gcp-setup                Configure Google Cloud Platform for Cloud Run deployment
   github-actions-setup     Create GitHub Actions service accounts and keys
@@ -347,7 +348,7 @@ cmd_generate_secrets() {
 
 cmd_use_dev_secrets() {
     print_header "Export Development JWT Keys"
-    print_info "Exporting dev environment JWT keys..."
+    print_info "Setting up dev environment JWT keys for export..."
     
     cd "$PROJECT_ROOT"
     
@@ -358,22 +359,36 @@ cmd_use_dev_secrets() {
         exit 1
     fi
     
-    # Export keys as environment variables
-    export JWT_PRIVATE_KEY="$(cat secrets/dev/jwt_private.pem)"
-    export JWT_PUBLIC_KEY="$(cat secrets/dev/jwt_public.pem)"
-    
-    print_success "✅ Development JWT keys exported to environment variables"
+    print_success "✅ Development JWT keys found"
     print_info ""
-    print_info "🚀 Keys are now available in your current shell session:"
-    print_info "• JWT_PRIVATE_KEY: Ready for service startup"
-    print_info "• JWT_PUBLIC_KEY: Ready for token verification"
+    print_warning "🔧 To export keys to your current shell, run this command:"
+    echo ""
+    echo "eval \"\$(./doit.sh export-dev-secrets)\""
+    echo ""
+    print_info "Or run the individual export commands:"
+    echo "export JWT_PRIVATE_KEY=\"\$(cat secrets/dev/jwt_private.pem)\""
+    echo "export JWT_PUBLIC_KEY=\"\$(cat secrets/dev/jwt_public.pem)\""
     print_info ""
-    print_info "📝 To use these keys:"
+    print_info "📝 After exporting:"
     print_info "• Start service: ./doit.sh python-service-start"
     print_info "• Generate token: python 2-ml-service/scripts/generate_jwt.py --user-id test_user"
-    print_info ""
-    print_warning "⚠️  Note: Keys are only available in the current shell session"
-    print_info "To use in a new terminal, run: ./doit.sh use-dev-secrets"
+}
+
+cmd_export_dev_secrets() {
+    # This command outputs export statements that can be eval'd
+    cd "$PROJECT_ROOT"
+    
+    # Check if dev keys exist
+    if [ ! -f "secrets/dev/jwt_private.pem" ] || [ ! -f "secrets/dev/jwt_public.pem" ]; then
+        echo "echo 'Error: Development JWT keys not found in secrets/dev/'" >&2
+        echo "echo 'Run ./doit.sh generate-secrets first to create keys'" >&2
+        exit 1
+    fi
+    
+    # Output export commands (no colors/formatting for clean eval)
+    echo "export JWT_PRIVATE_KEY=\"\$(cat secrets/dev/jwt_private.pem)\""
+    echo "export JWT_PUBLIC_KEY=\"\$(cat secrets/dev/jwt_public.pem)\""
+    echo "echo '✅ Development JWT keys exported to environment'"
 }
 
 cmd_env_switch() {
@@ -1167,6 +1182,10 @@ main() {
         "use-dev-secrets")
             shift
             cmd_use_dev_secrets "$@"
+            ;;
+        "export-dev-secrets")
+            shift
+            cmd_export_dev_secrets "$@"
             ;;
         "setup-secrets")
             shift

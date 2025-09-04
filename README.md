@@ -85,7 +85,7 @@ Generate JWT keys for all environments (dev/staging/production):
 ./doit.sh generate-secrets
 
 # Export dev keys to your shell session (needed each time)
-./doit.sh use-dev-secrets
+eval "$(./doit.sh export-dev-secrets)"
 
 # Start API service with JWT authentication
 ./doit.sh python-service-start
