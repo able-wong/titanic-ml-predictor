@@ -19,6 +19,7 @@ export interface ServerEnv {
   GOOGLE_GENERATIVE_AI_API_KEY?: string;
   GOOGLE_GENERATIVE_AI_MODEL_NAME?: string;
   JWT_PRIVATE_KEY?: string;
+  JWT_TTL: string;
   ML_SERVICE_URL: string;
 }
 
@@ -57,6 +58,7 @@ export function getServerEnv(): ServerEnv {
     GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     GOOGLE_GENERATIVE_AI_MODEL_NAME: process.env.GOOGLE_GENERATIVE_AI_MODEL_NAME,
     JWT_PRIVATE_KEY: process.env.JWT_PRIVATE_KEY,
+    JWT_TTL: process.env.JWT_TTL || '5m',
     ML_SERVICE_URL: process.env.ML_SERVICE_URL || 'http://localhost:8000',
   };
 }

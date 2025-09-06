@@ -5,6 +5,7 @@ import { decodeToken, isTokenExpired } from '../../utils/jwt';
 jest.mock('../../utils/env', () => ({
   getServerEnv: jest.fn(() => ({
     JWT_PRIVATE_KEY: 'test-private-key',
+    JWT_TTL: '5m',
     ML_SERVICE_URL: 'http://localhost:8000',
   })),
 }));
@@ -89,6 +90,7 @@ describe('JWT Utilities', () => {
       
       expect(env).toBeDefined();
       expect(env.JWT_PRIVATE_KEY).toBe('test-private-key');
+      expect(env.JWT_TTL).toBe('5m');
       expect(env.ML_SERVICE_URL).toBe('http://localhost:8000');
     });
   });

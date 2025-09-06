@@ -76,6 +76,18 @@ describe('Environment Utilities', () => {
       expect(env.JWT_PRIVATE_KEY).toBeUndefined();
     });
 
+    it('should return default JWT_TTL when not set', () => {
+      delete process.env.JWT_TTL;
+      const env = getServerEnv();
+      expect(env.JWT_TTL).toBe('5m');
+    });
+
+    it('should return custom JWT_TTL when set', () => {
+      process.env.JWT_TTL = '10m';
+      const env = getServerEnv();
+      expect(env.JWT_TTL).toBe('10m');
+    });
+
     it('should include all server environment variables', () => {
       process.env.FIREBASE_CONFIG = '{"test": "config"}';
       process.env.FIREBASE_PROJECT_ID = 'test-project';
@@ -83,6 +95,7 @@ describe('Environment Utilities', () => {
       process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'ai-key';
       process.env.GOOGLE_GENERATIVE_AI_MODEL_NAME = 'gemini';
       process.env.JWT_PRIVATE_KEY = 'jwt-key';
+      process.env.JWT_TTL = '15m';
       process.env.ML_SERVICE_URL = 'https://ml.example.com';
 
       const env = getServerEnv();
@@ -93,6 +106,7 @@ describe('Environment Utilities', () => {
       expect(env.GOOGLE_GENERATIVE_AI_API_KEY).toBe('ai-key');
       expect(env.GOOGLE_GENERATIVE_AI_MODEL_NAME).toBe('gemini');
       expect(env.JWT_PRIVATE_KEY).toBe('jwt-key');
+      expect(env.JWT_TTL).toBe('15m');
       expect(env.ML_SERVICE_URL).toBe('https://ml.example.com');
     });
   });

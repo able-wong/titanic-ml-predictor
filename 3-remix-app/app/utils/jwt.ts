@@ -18,7 +18,7 @@ export interface DecodedToken extends JWTPayload, JWTTokenData {}
  */
 export async function createAccessToken(
   data: JWTTokenData,
-  expiresIn: string = '1h'
+  expiresIn?: string
 ): Promise<string> {
   const env = getServerEnv();
   
@@ -26,11 +26,14 @@ export async function createAccessToken(
     throw new Error('JWT_PRIVATE_KEY environment variable is required');
   }
 
+  // Use provided expiresIn or fall back to environment variable (default: 5m)
+  const ttl = expiresIn || env.JWT_TTL;
+
   // Convert PEM private key to KeyLike object
   const privateKey = await importPrivateKey(env.JWT_PRIVATE_KEY);
   
   const now = Math.floor(Date.now() / 1000);
-  const expiration = getExpirationTime(expiresIn);
+  const expiration = getExpirationTime(ttl);
 
   const jwt = await new SignJWT(data)
     .setProtectedHeader({ alg: 'RS256' })
