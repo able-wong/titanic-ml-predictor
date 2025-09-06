@@ -47,6 +47,7 @@ export function getClientEnv(): ClientEnv {
 /**
  * Get environment variables for server-side usage
  * Includes all environment variables including secrets
+ * Falls back to parent project environment variables when local .env values are empty
  */
 export function getServerEnv(): ServerEnv {
   return {
