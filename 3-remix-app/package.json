@@ -1,0 +1,102 @@
+{
+  "name": "titanic-ml-predictor-web",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
+    "start": "remix-serve ./build/server/index.js",
+    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+    "typecheck": "npm run typecheck:app && npm run typecheck:tests",
+    "typecheck:app": "tsc",
+    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
+    "format": "prettier --write \"app/**/*.{ts,tsx}\"",
+    "test": "jest --passWithNoTests --testPathIgnorePatterns=/app/__tests__/integration-tests/",
+    "test:watch": "jest --watch --passWithNoTests --testPathIgnorePatterns=/app/__tests__/integration-tests/",
+    "test:integration": "jest app/__tests__/integration-tests --passWithNoTests --testTimeout=30000",
+    "test:all": "npm test && npm run test:integration",
+    "import-firestore": "node scripts/import-firestore-data.js",
+    "fetch-firebase": "node scripts/firebase-data-fetcher.js",
+    "test-firebase": "node scripts/test-firebase-config.js",
+    "test-ai": "node scripts/test-ai-config.js",
+    "env:staging": "./scripts/switch-env.sh staging",
+    "env:production": "./scripts/switch-env.sh production",
+    "deploy:staging": "npm run env:staging && npm run build && firebase deploy --only hosting",
+    "deploy:production": "npm run env:production && npm run build && firebase deploy --only hosting"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^1.2.22",
+    "@remix-run/node": "^2.16.6",
+    "@remix-run/serve": "^2.16.6",
+    "@remix-run/react": "^2.16.6",
+    "ai": "^4.3.17",
+    "firebase": "^11.8.1",
+    "firebase-admin": "^12.7.0",
+    "isbot": "^4.1.0",
+    "pino": "^9.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@remix-run/dev": "^2.16.6",
+    "@tailwindcss/postcss": "^4.1.8",
+    "@tailwindcss/vite": "^4.1.8",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.23",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
+    "autoprefixer": "^10.4.19",
+    "daisyui": "^5.0.40",
+    "dotenv": "^16.5.0",
+    "eslint": "^8.38.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jest": "^29.7.0",
+    "postcss": "^8.4.38",
+    "postcss-nested": "^7.0.2",
+    "prettier": "^2.8.8",
+    "tailwind-merge": "^3.3.0",
+    "tailwindcss": "^4.1.8",
+    "ts-jest": "^29.3.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
+    "tw-animate-css": "^1.3.0",
+    "typescript": "^5.1.6",
+    "vite": "^6.0.0",
+    "vite-tsconfig-paths": "^4.2.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "moduleNameMapper": {
+      "^~/(.*)$": "<rootDir>/app/$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.test.json"
+        }
+      ]
+    }
+  }
+}
