@@ -1,6 +1,10 @@
 import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
 import { createLogger } from '~/utils/logger';
+import { useAuth } from '~/contexts/AuthContext';
+import { SignInButton } from '~/components/auth/SignInButton';
+import { UserProfile } from '~/components/auth/UserProfile';
 
 export const meta: MetaFunction = () => {
   return [
@@ -21,10 +25,20 @@ export async function loader(_args: LoaderFunctionArgs) {
     requestId: Math.random().toString(36).substring(7),
   });
 
-  return json({ success: true });
+  // Pass client environment variables to the browser
+  const { getClientEnv } = await import('~/utils/env');
+  const clientEnv = getClientEnv();
+
+  return json({ 
+    success: true,
+    env: clientEnv 
+  });
 }
 
 export default function Index() {
+  const { env } = useLoaderData<typeof loader>();
+  const { user, loading, initialized, logout, signInWithGoogle } = useAuth();
+
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     localStorage.setItem('theme', newTheme);
     window.location.reload();
@@ -35,169 +49,181 @@ export default function Index() {
       <div className="navbar bg-base-200">
         <div className="flex-1">
           <span className="btn btn-ghost text-xl">
-            Remix + TailwindCSS + DaisyUI Demo
+            Titanic ML Predictor
           </span>
         </div>
         <div className="flex-none">
-          <div className="dropdown dropdown-end">
-            <button className="btn btn-ghost">
-              Theme
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 fill-current"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2l-1.5 4.5h-6l4.5 3.5-1.5 4.5 4.5-3.5 4.5 3.5-1.5-4.5 4.5-3.5h-6L12 2z" />
-              </svg>
-            </button>
-            <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li>
-                <button onClick={() => handleThemeChange('light')}>
-                  Light
-                </button>
-              </li>
-              <li>
-                <button onClick={() => handleThemeChange('dark')}>Dark</button>
-              </li>
-              <li>
-                <button onClick={() => handleThemeChange('system')}>
-                  System
-                </button>
-              </li>
-            </ul>
+          <div className="flex items-center gap-4">
+            {/* User Auth Section */}
+            {initialized && !loading && (
+              <div>
+                {user ? (
+                  <span className="text-sm">
+                    Hi, {user.displayName?.split(' ')[0] || 'User'} |{' '}
+                    <button 
+                      onClick={() => logout().catch(console.error)}
+                      className="link link-hover"
+                    >
+                      Sign out
+                    </button>
+                  </span>
+                ) : (
+                  <button 
+                    onClick={() => signInWithGoogle().catch(console.error)}
+                    className="link link-hover text-sm"
+                  >
+                    Sign in
+                  </button>
+                )}
+              </div>
+            )}
+            
+            {/* Theme Dropdown */}
+            <div className="dropdown dropdown-end">
+              <button className="link link-hover text-sm">
+                Theme ▼
+              </button>
+              <ul className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
+                <li>
+                  <button onClick={() => handleThemeChange('light')} className="text-sm">
+                    Light
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleThemeChange('dark')} className="text-sm">
+                    Dark
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleThemeChange('system')} className="text-sm">
+                    System
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto p-4 space-y-8">
-        {/* Cards Section */}
+        {/* Welcome Hero Section */}
+        <div className="hero bg-base-200 rounded-lg">
+          <div className="hero-content text-center">
+            <div className="max-w-lg">
+              <h1 className="text-4xl md:text-5xl font-bold whitespace-nowrap">
+                🚢 Titanic ML Predictor
+              </h1>
+              <p className="py-6">
+                Use machine learning to predict passenger survival on the Titanic. 
+                {user 
+                  ? ` Welcome back, ${user.displayName || 'user'}! Ready to make predictions?` 
+                  : ' Sign in to start making predictions.'
+                }
+              </p>
+              <div className="flex justify-center">
+                {!user && (
+                  <SignInButton 
+                    className="btn btn-primary btn-lg justify-center" 
+                    onSuccess={() => {
+                      // Redirect to prediction form after successful login
+                      window.location.href = '/predict';
+                    }}
+                  />
+                )}
+                {user && (
+                  <button 
+                    onClick={() => window.location.href = '/predict'}
+                    className="btn btn-primary btn-lg"
+                  >
+                    Start Predicting
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Learning & Tech Stack Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="card bg-base-200 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">Card Title</h2>
-              <p>This is a basic card component from DaisyUI.</p>
-              <div className="card-actions justify-end">
-                <button className="btn btn-primary">Action</button>
+              <h2 className="card-title">🧠 Machine Learning</h2>
+              <p>Scikit-learn pipeline with Logistic Regression and Decision Tree models. Features engineering includes age groups, fare categories, and family size from passenger data.</p>
+              <div className="text-xs mt-2 space-y-1">
+                <div><strong>Training:</strong> 80/20 train-test split on public Titanic dataset</div>
+                <div><strong>Models:</strong> Logistic Regression & Decision Tree with ensemble averaging</div>
+                <div><strong>Features:</strong> Age, class, gender, fare, family size, embarkation port</div>
+              </div>
+              <div className="stats stats-vertical text-xs mt-2">
+                <div className="stat">
+                  <div className="stat-title">Model Accuracy</div>
+                  <div className="stat-value text-sm">~82%</div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="card bg-base-200 shadow-xl">
-            <figure className="px-10 pt-10">
+            <div className="card-body">
+              <h2 className="card-title">🏗️ Full Stack</h2>
+              <p>Remix.js frontend with server-side rendering connecting to production FastAPI ML service with JWT authentication and rate limiting.</p>
+              <div className="text-xs mt-2 space-y-1">
+                <div><strong>Frontend:</strong> Remix SSR, TypeScript, Firebase Auth, DaisyUI</div>
+                <div><strong>Backend:</strong> FastAPI with lazy loading, JWT RS256, Redis rate limiting</div>
+                <div><strong>API Features:</strong> Request tracing, health monitoring, input validation</div>
+              </div>
+              <div className="text-xs mt-2">
+                <span className="badge badge-sm">Remix</span>{' '}
+                <span className="badge badge-sm">FastAPI</span>{' '}
+                <span className="badge badge-sm">Firebase</span>{' '}
+                <span className="badge badge-sm">JWT</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="card bg-base-200 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">🚀 DevOps & CI/CD</h2>
+              <p>Multi-environment deployment pipeline with automated testing, security scanning, and containerized deployments to Google Cloud Run and Firebase App Hosting.</p>
+              <div className="text-xs mt-2 space-y-1">
+                <div><strong>Frontend:</strong> Firebase App Hosting with automatic builds from git</div>
+                <div><strong>Backend:</strong> Google Cloud Run with Docker containers and health checks</div>
+                <div><strong>Pipeline:</strong> GitHub Actions, Ruff linting, pytest testing, security scans</div>
+              </div>
+              <div className="text-xs mt-2">
+                <span className="badge badge-sm">Firebase</span>{' '}
+                <span className="badge badge-sm">Cloud Run</span>{' '}
+                <span className="badge badge-sm">Docker</span>{' '}
+                <span className="badge badge-sm">Actions</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        {/* Success message only when authenticated */}
+        {user && initialized && (
+          <div className="space-y-4">
+            <div className="alert alert-success">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-32 w-32 stroke-current"
                 fill="none"
                 viewBox="0 0 24 24"
+                className="stroke-current shrink-0 w-6 h-6"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-            </figure>
-            <div className="card-body">
-              <h2 className="card-title">Card with Icon</h2>
-              <p>This card includes an icon and some content.</p>
-              <div className="card-actions justify-end">
-                <button className="btn btn-secondary">Details</button>
-              </div>
+              <span>
+                Authentication successful! You can now make ML predictions.
+              </span>
             </div>
           </div>
-
-          <div className="card bg-base-200 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Interactive Card</h2>
-              <p>This card has some interactive elements.</p>
-              <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Toggle me</span>
-                  <input type="checkbox" className="toggle toggle-primary" />
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Form Section */}
-        <div className="card bg-base-200 shadow-xl max-w-md mx-auto">
-          <div className="card-body space-y-4">
-            <h2 className="card-title">Contact Form</h2>
-            <div className="form-control w-full">
-              <label htmlFor="name" className="label">
-                <span className="label-text font-medium">Name</span>
-              </label>
-              <input
-                id="name"
-                type="text"
-                placeholder="Enter your name"
-                className="input input-bordered w-full"
-              />
-            </div>
-            <div className="form-control w-full">
-              <label htmlFor="email" className="label">
-                <span className="label-text font-medium">Email</span>
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="input input-bordered w-full"
-              />
-            </div>
-            <div className="form-control w-full">
-              <label htmlFor="message" className="label">
-                <span className="label-text font-medium">Message</span>
-              </label>
-              <textarea
-                id="message"
-                className="textarea textarea-bordered w-full"
-                placeholder="Your message"
-              ></textarea>
-            </div>
-            <div className="card-actions justify-end">
-              <button className="btn btn-primary">Send Message</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Alert Section */}
-        <div className="space-y-4">
-          <div className="alert alert-info">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              className="stroke-current shrink-0 w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
-            <span>This is an info alert</span>
-          </div>
-          <div className="alert alert-success">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>This is a success alert</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

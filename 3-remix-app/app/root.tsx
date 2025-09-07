@@ -1,12 +1,16 @@
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { AuthProvider } from "./contexts/AuthContext";
+import { getClientEnv } from "./utils/env";
 
 import "./tailwind.css";
 
@@ -17,6 +21,12 @@ export const links: LinksFunction = () => [
     href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Ccircle cx='16' cy='16' r='15' stroke='currentColor' stroke-width='2'/%3E%3Cpath d='M12 8h6a6 6 0 0 1 0 12h-6V8zm0 0v16' stroke='currentColor' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E",
   },
 ];
+
+export async function loader(_args: LoaderFunctionArgs) {
+  // Provide client environment to all routes
+  const clientEnv = getClientEnv();
+  return json({ env: clientEnv });
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
@@ -60,5 +70,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const { env } = useLoaderData<typeof loader>();
+  
+  return (
+    <AuthProvider env={env}>
+      <Outlet />
+    </AuthProvider>
+  );
 }
