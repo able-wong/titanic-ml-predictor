@@ -17,9 +17,6 @@ secrets:
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
 
-scripts:
-  buildCommand: rm -Rf node_modules && npm install && npm run build
-
 # Runtime configuration
 runtime: nodejs20
 
