@@ -30,7 +30,7 @@ build:
     - rm -rf node_modules
     - npm install
     - npm run build
-    
+
 # Runtime configuration  
 runtime: nodejs20
 
@@ -40,3 +40,4 @@ memoryMiB: 1024
 
 # Concurrency settings (production can handle more)
 concurrency: 200
+
