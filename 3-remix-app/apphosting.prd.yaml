@@ -14,6 +14,8 @@ env:
 secrets:
   - variable: FIREBASE_CONFIG
     secret: firebase-config-prd
+  - variable: FIREBASE_API_KEY
+    secret: firebase-config-api-key-prd
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
 
