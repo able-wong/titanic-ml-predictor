@@ -75,9 +75,6 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.22.4"
-  },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
