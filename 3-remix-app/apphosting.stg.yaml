@@ -26,6 +26,8 @@ secrets:
 # Build configuration
 build:
   commands:
+    # Include dev dependencies for build tools (@remix-run/dev, vite, etc.)
+    # Remix bundles all runtime dependencies into build/server/index.js
     - npm ci --include=dev
     - npm run build
 
