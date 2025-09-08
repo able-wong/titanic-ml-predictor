@@ -23,7 +23,7 @@ secrets:
   # JWT private key for ML service authentication
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
-    
+
 # Build configuration to fix npm optional dependencies bug
 build:
   commands:
