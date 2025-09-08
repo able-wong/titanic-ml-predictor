@@ -29,12 +29,14 @@ export interface ServerEnv {
  */
 export function getClientEnv(): ClientEnv {
   const firebaseConfig = process.env.FIREBASE_CONFIG;
+  const firebaseApiKey = process.env.FIREBASE_API_KEY;
   let parsedFirebaseConfig: FirebaseConfig | undefined;
 
   // Debug logging for Firebase configuration
   console.log('DEBUG: process.env.FIREBASE_CONFIG exists:', !!firebaseConfig);
   console.log('DEBUG: process.env.FIREBASE_CONFIG length:', firebaseConfig?.length || 0);
   console.log('DEBUG: process.env.FIREBASE_CONFIG starts with {:', firebaseConfig?.startsWith('{'));
+  console.log('DEBUG: process.env.FIREBASE_API_KEY exists:', !!firebaseApiKey);
 
   if (firebaseConfig) {
     try {
@@ -42,6 +44,12 @@ export function getClientEnv(): ClientEnv {
       console.log('DEBUG: Parsed Firebase config successfully');
       console.log('DEBUG: Firebase config has apiKey:', !!parsedFirebaseConfig?.apiKey);
       console.log('DEBUG: Firebase config has projectId:', !!parsedFirebaseConfig?.projectId);
+      
+      // If apiKey is missing from main config, use separate FIREBASE_API_KEY
+      if (!parsedFirebaseConfig?.apiKey && firebaseApiKey) {
+        console.log('DEBUG: Using separate FIREBASE_API_KEY to fill missing apiKey');
+        parsedFirebaseConfig.apiKey = firebaseApiKey;
+      }
     } catch (error) {
       console.error('FIREBASE_CONFIG environment variable contains invalid JSON:', error);
       console.error('DEBUG: Raw FIREBASE_CONFIG value:', firebaseConfig);
