@@ -31,12 +31,23 @@ export function getClientEnv(): ClientEnv {
   const firebaseConfig = process.env.FIREBASE_CONFIG;
   let parsedFirebaseConfig: FirebaseConfig | undefined;
 
+  // Debug logging for Firebase configuration
+  console.log('DEBUG: process.env.FIREBASE_CONFIG exists:', !!firebaseConfig);
+  console.log('DEBUG: process.env.FIREBASE_CONFIG length:', firebaseConfig?.length || 0);
+  console.log('DEBUG: process.env.FIREBASE_CONFIG starts with {:', firebaseConfig?.startsWith('{'));
+
   if (firebaseConfig) {
     try {
       parsedFirebaseConfig = JSON.parse(firebaseConfig);
-    } catch {
-      console.error('FIREBASE_CONFIG environment variable contains invalid JSON');
+      console.log('DEBUG: Parsed Firebase config successfully');
+      console.log('DEBUG: Firebase config has apiKey:', !!parsedFirebaseConfig?.apiKey);
+      console.log('DEBUG: Firebase config has projectId:', !!parsedFirebaseConfig?.projectId);
+    } catch (error) {
+      console.error('FIREBASE_CONFIG environment variable contains invalid JSON:', error);
+      console.error('DEBUG: Raw FIREBASE_CONFIG value:', firebaseConfig);
     }
+  } else {
+    console.error('DEBUG: FIREBASE_CONFIG environment variable is not set');
   }
 
   return {
