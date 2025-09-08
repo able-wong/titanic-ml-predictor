@@ -11,7 +11,7 @@ env:
   - variable: JWT_TTL
     value: 5m
   - variable: NODE_ENV
-    value: production
+    value: development
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
 # These need to be created in Firebase Console
@@ -23,13 +23,7 @@ secrets:
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
     
-# Build configuration
-build:
-  commands:
-    # Include dev dependencies for build tools (@remix-run/dev, vite, etc.)
-    # Remix bundles all runtime dependencies into build/server/index.js
-    - npm ci --include=dev
-    - npm run build
+# Build configuration uses default Node.js buildpack with NODE_ENV=development
 
 # Runtime configuration  
 runtime: nodejs20
