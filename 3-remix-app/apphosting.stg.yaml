@@ -10,6 +10,9 @@ env:
     value: https://titanic-ml-service-stg-411470717307.us-central1.run.app
   - variable: JWT_TTL
     value: 5m
+  # Disable default Node.js buildpack scripts to use custom build commands
+  - variable: GOOGLE_NODE_RUN_SCRIPTS
+    value: ""
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
 # These need to be created in Firebase Console
@@ -20,6 +23,13 @@ secrets:
   # JWT private key for ML service authentication
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
+    
+# Build configuration to fix npm optional dependencies bug
+build:
+  commands:
+    - rm -rf node_modules package-lock.json
+    - npm install
+    - npm run build
     
 # Runtime configuration  
 runtime: nodejs20
