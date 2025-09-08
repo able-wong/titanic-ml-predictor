@@ -18,6 +18,8 @@ secrets:
     secret: firebase-config-api-key-stg
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
+  - variable: DUMMY_SECRET_TEST
+    secret: dummy-secret-test
 
 # Runtime configuration
 runtime: nodejs20

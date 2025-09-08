@@ -44,6 +44,8 @@ export function getClientEnv(): ClientEnv {
   console.log('DEBUG: process.env.FIREBASE_CONFIG length:', firebaseConfig?.length || 0);
   console.log('DEBUG: process.env.FIREBASE_CONFIG starts with {:', firebaseConfig?.startsWith('{'));
   console.log('DEBUG: process.env.FIREBASE_API_KEY_HEX exists:', !!firebaseApiKeyHex);
+  console.log('DEBUG: process.env.DUMMY_SECRET_TEST exists:', !!process.env.DUMMY_SECRET_TEST);
+  console.log('DEBUG: process.env.JWT_PRIVATE_KEY exists:', !!process.env.JWT_PRIVATE_KEY);
 
   if (firebaseConfig) {
     try {
