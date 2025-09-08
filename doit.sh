@@ -57,6 +57,9 @@ Available Commands:
   docker-build             Build Docker container for the ML service
   docker-start             Start Docker container for the ML service
   env-switch               Switch between staging/production environments
+  generate-secrets         Generate JWT keys for all environments (dev/stg/prd)
+  use-dev-secrets          Show commands to export dev JWT keys to environment
+  export-dev-secrets       Output export commands for dev keys (used with eval)
   setup-secrets            Upload JWT keys to Google Secret Manager
   gcp-setup                Configure Google Cloud Platform for Cloud Run deployment
   github-actions-setup     Create GitHub Actions service accounts and keys
@@ -309,6 +312,83 @@ cmd_install_deps() {
     print_success "Development tools installed"
     
     print_success "All dependencies installed successfully"
+}
+
+cmd_generate_secrets() {
+    print_header "Generate JWT Keys for All Environments"
+    print_info "Generating RSA key pairs for dev, staging, and production..."
+    
+    cd "$PROJECT_ROOT"
+    
+    # Create secrets directories
+    for env in dev stg prd; do
+        mkdir -p secrets/$env
+        print_info "Creating keys for $env environment..."
+        
+        # Generate RSA key pair for this environment
+        openssl genrsa -out secrets/$env/jwt_private.pem 2048 2>/dev/null
+        openssl rsa -in secrets/$env/jwt_private.pem -pubout -out secrets/$env/jwt_public.pem 2>/dev/null
+        
+        # Set appropriate permissions
+        chmod 600 secrets/$env/jwt_private.pem
+        chmod 644 secrets/$env/jwt_public.pem
+        
+        print_success "✅ Generated keys for $env: secrets/$env/"
+    done
+    
+    print_success "🔑 JWT keys generated for all environments!"
+    print_info ""
+    print_info "📝 Next steps:"
+    print_info "• For local development: ./doit.sh use-dev-secrets"
+    print_info "• For staging deployment: ./doit.sh env-switch staging && ./doit.sh setup-secrets"
+    print_info "• For production deployment: ./doit.sh env-switch prd && ./doit.sh setup-secrets"
+    print_info ""
+    print_warning "🔒 Security: Keep these keys secure and never commit them to git"
+}
+
+cmd_use_dev_secrets() {
+    print_header "Export Development JWT Keys"
+    print_info "Setting up dev environment JWT keys for export..."
+    
+    cd "$PROJECT_ROOT"
+    
+    # Check if dev keys exist
+    if [ ! -f "secrets/dev/jwt_private.pem" ] || [ ! -f "secrets/dev/jwt_public.pem" ]; then
+        print_error "Development JWT keys not found in secrets/dev/"
+        print_info "Run './doit.sh generate-secrets' first to create keys"
+        exit 1
+    fi
+    
+    print_success "✅ Development JWT keys found"
+    print_info ""
+    print_warning "🔧 To export keys to your current shell, run this command:"
+    echo ""
+    echo "eval \"\$(./doit.sh export-dev-secrets)\""
+    echo ""
+    print_info "Or run the individual export commands:"
+    echo "export JWT_PRIVATE_KEY=\"\$(cat secrets/dev/jwt_private.pem)\""
+    echo "export JWT_PUBLIC_KEY=\"\$(cat secrets/dev/jwt_public.pem)\""
+    print_info ""
+    print_info "📝 After exporting:"
+    print_info "• Start service: ./doit.sh python-service-start"
+    print_info "• Generate token: python 2-ml-service/scripts/generate_jwt.py --user-id test_user"
+}
+
+cmd_export_dev_secrets() {
+    # This command outputs export statements that can be eval'd
+    cd "$PROJECT_ROOT"
+    
+    # Check if dev keys exist
+    if [ ! -f "secrets/dev/jwt_private.pem" ] || [ ! -f "secrets/dev/jwt_public.pem" ]; then
+        echo "echo 'Error: Development JWT keys not found in secrets/dev/'" >&2
+        echo "echo 'Run ./doit.sh generate-secrets first to create keys'" >&2
+        exit 1
+    fi
+    
+    # Output export commands (no colors/formatting for clean eval)
+    echo "export JWT_PRIVATE_KEY=\"\$(cat secrets/dev/jwt_private.pem)\""
+    echo "export JWT_PUBLIC_KEY=\"\$(cat secrets/dev/jwt_public.pem)\""
+    echo "echo '✅ Development JWT keys exported to environment'"
 }
 
 cmd_env_switch() {
@@ -1094,6 +1174,18 @@ main() {
         "env-switch")
             shift
             cmd_env_switch "$@"
+            ;;
+        "generate-secrets")
+            shift
+            cmd_generate_secrets "$@"
+            ;;
+        "use-dev-secrets")
+            shift
+            cmd_use_dev_secrets "$@"
+            ;;
+        "export-dev-secrets")
+            shift
+            cmd_export_dev_secrets "$@"
             ;;
         "setup-secrets")
             shift

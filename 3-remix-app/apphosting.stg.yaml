@@ -1,0 +1,37 @@
+# Firebase App Hosting Configuration - STAGING
+# https://firebase.google.com/docs/app-hosting
+
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  maxInstances: 4
+  minInstances: 0
+  concurrency: 5
+
+# Environment configuration for staging
+env:
+  - variable: FIREBASE_PROJECT_ID
+    value: titanic-ml-predictor-stg
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: ML_SERVICE_URL
+    value: https://titanic-ml-service-411470717307.us-central1.run.app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: JWT_TTL
+    value: 5m
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: FIREBASE_CONFIG
+    secret: firebase-config-stg
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: JWT_PRIVATE_KEY
+    secret: jwt-private-key
+    availability:
+      - BUILD
+      - RUNTIME

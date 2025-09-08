@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "@types/jest", "node"],
+    "isolatedModules": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./app/*"]
+    }
+  },
+  "include": [
+    "**/__tests__/**/*.ts",
+    "**/__tests__/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

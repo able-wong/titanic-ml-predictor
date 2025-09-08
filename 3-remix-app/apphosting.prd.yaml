@@ -1,0 +1,37 @@
+# Firebase App Hosting Configuration - PRODUCTION
+# https://firebase.google.com/docs/app-hosting
+
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  maxInstances: 4
+  minInstances: 0
+  concurrency: 5
+
+# Environment configuration for production
+env:
+  - variable: FIREBASE_PROJECT_ID
+    value: titanic-ml-predictor-prd
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: ML_SERVICE_URL
+    value: https://titanic-ml-service-872609158824.us-central1.run.app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: JWT_TTL
+    value: 5m
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: FIREBASE_CONFIG
+    secret: firebase-config-prd
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: JWT_PRIVATE_KEY
+    secret: jwt-private-key
+    availability:
+      - BUILD
+      - RUNTIME

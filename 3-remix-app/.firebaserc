@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "titanic-ml-predictor-stg",
+    "staging": "titanic-ml-predictor-stg",
+    "production": "titanic-ml-predictor-prd"
+  }
+}
