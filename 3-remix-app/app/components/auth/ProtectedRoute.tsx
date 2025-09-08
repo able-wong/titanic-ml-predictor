@@ -22,14 +22,48 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, loading, initialized } = useAuth();
 
-  // Show loading state while Firebase initializes or auth state is loading
-  if (!initialized || loading) {
+  // Only show loading spinner for actual auth state changes after initialization,
+  // not during initial Firebase Auth setup (better UX)
+  if (initialized && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         {loadingFallback || (
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading...</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // If Firebase Auth is not yet initialized, show sign-in prompt instead of spinner
+  // This provides better UX when directly accessing protected routes
+  if (!initialized) {
+    if (!requireAuth) {
+      return <>{children}</>;
+    }
+    
+    // Show sign-in prompt immediately for protected routes
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        {fallback || (
+          <div className="max-w-md w-full mx-auto p-6">
+            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Sign In Required
+              </h1>
+              <p className="text-gray-600 mb-6">
+                Please sign in to access the Titanic ML Predictor.
+              </p>
+              <SignInButton className="w-full justify-center mb-4" />
+              <a 
+                href="/" 
+                className="inline-block text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                ← Back to Home
+              </a>
+            </div>
           </div>
         )}
       </div>
@@ -80,7 +114,8 @@ export function useAuthGuard() {
   
   return {
     isAuthenticated: !!user,
-    isLoading: !initialized || loading,
+    isLoading: initialized && loading, // Only loading during actual auth state changes
     user,
+    initialized,
   };
 }

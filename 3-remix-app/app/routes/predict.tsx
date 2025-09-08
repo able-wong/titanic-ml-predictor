@@ -4,8 +4,9 @@ import { useLoaderData, useActionData, Form, useNavigation } from '@remix-run/re
 import React, { useState } from 'react';
 import { ProtectedRoute } from '~/components/auth/ProtectedRoute';
 import { useAuth } from '~/contexts/AuthContext';
-import { getClientEnv, getServerEnv } from '~/utils/env';
-import { createFirebaseRestApi } from '~/services/firebase-restapi';
+import { getClientEnv } from '~/utils/env';
+import { makePrediction } from '~/services/predictionService';
+import type { PredictionRequest } from '~/services/mlService';
 
 export const meta: MetaFunction = () => {
   return [
@@ -31,27 +32,27 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ error: 'Authentication token required' }, { status: 401 });
   }
 
-  // Verify Firebase token server-side to prevent direct API access
-  try {
-    const serverEnv = getServerEnv();
-    await createFirebaseRestApi(serverEnv, firebaseToken);
-    // Token is automatically verified by createFirebaseRestApi
-  } catch (error) {
-    console.error('Firebase token verification failed:', error);
-    return json({ error: 'Invalid authentication token' }, { status: 401 });
+  // Extract prediction parameters
+  const predictionData: PredictionRequest = {
+    pclass: parseInt(formData.get('pclass') as string),
+    sex: formData.get('sex') as string,
+    age: parseFloat(formData.get('age') as string),
+    sibsp: parseInt(formData.get('sibsp') as string),
+    parch: parseInt(formData.get('parch') as string),
+    fare: parseFloat(formData.get('fare') as string),
+    embarked: formData.get('embarked') as string,
+  };
+
+  // Use shared prediction service (eliminates redundant token verification and network hop)
+  const result = await makePrediction({ firebaseToken, predictionData });
+
+  if (!result.success) {
+    const status = result.error === 'Authentication failed' ? 401 : 
+                   result.missingFields ? 400 : 500;
+    return json(result, { status });
   }
 
-  // Forward to the API route with Authorization header
-  const response = await fetch(new URL('/api/predict', request.url).toString(), {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${firebaseToken}`,
-    },
-    body: formData,
-  });
-
-  const result = await response.json();
-  return json(result, { status: response.status });
+  return json(result);
 }
 
 export default function Predict() {
@@ -354,14 +355,14 @@ export default function Predict() {
               <div className="card-body">
                 <h2 className="card-title text-2xl mb-4">Prediction Results</h2>
                 
-                {actionData.error ? (
+                {'error' in actionData ? (
                   <div className="alert alert-error">
                     <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span><strong>Error:</strong> {actionData.error}</span>
                   </div>
-                ) : actionData.prediction ? (
+                ) : 'prediction' in actionData && actionData.prediction ? (
                   <div className="space-y-4">
                     {/* Ensemble Result */}
                     <div className={`alert ${actionData.prediction.ensemble_result.prediction === 'survived' ? 'alert-success' : 'alert-warning'}`}>
