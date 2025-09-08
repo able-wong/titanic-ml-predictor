@@ -23,14 +23,14 @@ secrets:
   # JWT private key for ML service authentication
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
-    
+ 
 # Build configuration to fix npm optional dependencies bug
 build:
   commands:
     - rm -rf node_modules
     - npm install
     - npm run build
-    
+ 
 # Runtime configuration  
 runtime: nodejs20
 
@@ -40,3 +40,4 @@ memoryMiB: 512
 
 # Concurrency settings (optional)
 concurrency: 100
+
