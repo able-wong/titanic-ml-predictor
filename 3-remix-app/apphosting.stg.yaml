@@ -10,8 +10,6 @@ env:
     value: https://titanic-ml-service-stg-411470717307.us-central1.run.app
   - variable: JWT_TTL
     value: 5m
-  - variable: NODE_ENV
-    value: production
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
 # These need to be created in Firebase Console
@@ -23,14 +21,6 @@ secrets:
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
     
-# Build configuration
-build:
-  commands:
-    # Include dev dependencies for build tools (@remix-run/dev, vite, etc.)
-    # Remix bundles all runtime dependencies into build/server/index.js
-    - npm ci --include=dev
-    - npm run build
-
 # Runtime configuration  
 runtime: nodejs20
 
