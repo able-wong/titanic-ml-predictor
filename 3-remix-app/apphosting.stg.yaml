@@ -3,41 +3,36 @@
 
 # Environment configuration for staging
 env:
-  # Non-sensitive environment variables
   - variable: FIREBASE_PROJECT_ID
     value: titanic-ml-predictor-stg
   - variable: ML_SERVICE_URL
     value: https://titanic-ml-service-stg-411470717307.us-central1.run.app
   - variable: JWT_TTL
     value: 5m
-  # Disable default Node.js buildpack scripts to use custom build commands
   - variable: GOOGLE_NODE_RUN_SCRIPTS
     value: ""
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
-# These need to be created in Firebase Console
 secrets:
-  # Firebase configuration (contains API keys)
   - variable: FIREBASE_CONFIG
     secret: firebase-config-stg
-  # JWT private key for ML service authentication
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
- 
+
 # Build configuration to fix npm optional dependencies bug
 build:
   commands:
     - rm -rf node_modules
     - npm install
     - npm run build
- 
+
 # Runtime configuration  
 runtime: nodejs20
 
-# CPU and memory allocation (optional)
+# CPU and memory allocation
 cpu: 1
 memoryMiB: 512
 
-# Concurrency settings (optional)
+# Concurrency settings
 concurrency: 100
 
