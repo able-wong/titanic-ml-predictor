@@ -4,10 +4,14 @@
 # Environment configuration for staging
 env:
   # Non-sensitive environment variables
-  FIREBASE_PROJECT_ID: titanic-ml-predictor-stg
-  ML_SERVICE_URL: https://titanic-ml-service-stg-411470717307.us-central1.run.app
-  JWT_TTL: 5m
-  NODE_ENV: production
+  - variable: FIREBASE_PROJECT_ID
+    value: titanic-ml-predictor-stg
+  - variable: ML_SERVICE_URL
+    value: https://titanic-ml-service-stg-411470717307.us-central1.run.app
+  - variable: JWT_TTL
+    value: 5m
+  - variable: NODE_ENV
+    value: production
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
 # These need to be created in Firebase Console
