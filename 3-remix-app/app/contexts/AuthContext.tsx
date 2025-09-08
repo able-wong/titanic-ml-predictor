@@ -43,17 +43,25 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
 
     const initializeAuth = async () => {
       try {
+        console.log('DEBUG: Starting Firebase Auth initialization');
+        console.log('DEBUG: env object passed to AuthProvider:', {
+          hasFirebaseConfig: !!env.FIREBASE_CONFIG,
+          appName: env.APP_NAME
+        });
+        
         auth = await getFirebaseAuth(env);
+        console.log('DEBUG: Firebase Auth instance obtained successfully');
         setInitialized(true);
         
         // Set up auth state listener - this will fire when Firebase determines auth state
         unsubscribe = onAuthStateChanged(auth, (user) => {
+          console.log('DEBUG: Auth state changed:', user ? 'User signed in' : 'User signed out');
           setUser(user);
           setAuthChecked(true); // Mark as checked when we get the first callback
           setLoading(false); // Reset loading after auth operations
         });
       } catch (error) {
-        console.error('Failed to initialize Firebase Auth:', error);
+        console.error('DEBUG: Failed to initialize Firebase Auth in AuthContext:', error);
         setLoading(false);
         setInitialized(true);
         setAuthChecked(true);
