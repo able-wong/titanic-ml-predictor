@@ -1,0 +1,36 @@
+# Firebase App Hosting Configuration - PRODUCTION
+# https://firebase.google.com/docs/app-hosting
+
+# Environment configuration for production
+env:
+  # Non-sensitive environment variables
+  FIREBASE_PROJECT_ID: titanic-ml-predictor-prd
+  ML_SERVICE_URL: https://titanic-ml-service-prd-872609158824.us-central1.run.app
+  JWT_TTL: 5m
+  NODE_ENV: production
+
+# Secrets (managed via Firebase Console under App Hosting > Secrets)
+# These need to be created in Firebase Console
+secrets:
+  # Firebase configuration (contains API keys)
+  - variable: FIREBASE_CONFIG
+    secret: firebase-config-prd
+  # JWT private key for ML service authentication
+  - variable: JWT_PRIVATE_KEY
+    secret: jwt-private-key
+    
+# Build configuration
+build:
+  commands:
+    - npm ci
+    - npm run build
+
+# Runtime configuration  
+runtime: nodejs20
+
+# CPU and memory allocation (production may need more resources)
+cpu: 2
+memoryMiB: 1024
+
+# Concurrency settings (production can handle more)
+concurrency: 200
