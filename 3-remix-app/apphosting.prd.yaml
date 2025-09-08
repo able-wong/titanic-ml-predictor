@@ -17,11 +17,8 @@ secrets:
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
 
-# Build configuration to fix npm optional dependencies bug
-build:
-  commands:
-    - npm install
-    - npm run build
+scripts:
+  buildCommand: rm -Rf node_modules && npm install && npm run build
 
 # Runtime configuration
 runtime: nodejs20
