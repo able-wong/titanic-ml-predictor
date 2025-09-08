@@ -10,8 +10,6 @@ env:
     value: https://titanic-ml-service-prd-872609158824.us-central1.run.app
   - variable: JWT_TTL
     value: 5m
-  - variable: NODE_ENV
-    value: development
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
 # These need to be created in Firebase Console
@@ -23,8 +21,6 @@ secrets:
   - variable: JWT_PRIVATE_KEY
     secret: jwt-private-key
     
-# Build configuration uses default Node.js buildpack with NODE_ENV=development
-
 # Runtime configuration  
 runtime: nodejs20
 
