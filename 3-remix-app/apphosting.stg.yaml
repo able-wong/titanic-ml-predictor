@@ -27,7 +27,7 @@ secrets:
 # Build configuration to fix npm optional dependencies bug
 build:
   commands:
-    - rm -rf node_modules package-lock.json
+    - rm -rf node_modules
     - npm install
     - npm run build
     
