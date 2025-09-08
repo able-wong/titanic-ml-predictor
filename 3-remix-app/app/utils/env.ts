@@ -24,53 +24,19 @@ export interface ServerEnv {
 }
 
 /**
- * Convert hex string back to original string
- */
-function hexToString(hex: string): string {
-  return Buffer.from(hex, 'hex').toString();
-}
-
-/**
  * Get environment variables for client-side usage
  * Only returns safe-to-expose variables
  */
 export function getClientEnv(): ClientEnv {
   const firebaseConfig = process.env.FIREBASE_CONFIG;
-  const firebaseApiKeyHex = process.env.FIREBASE_API_KEY_HEX;
   let parsedFirebaseConfig: FirebaseConfig | undefined;
-
-  // Debug logging for Firebase configuration
-  console.log('DEBUG: process.env.FIREBASE_CONFIG exists:', !!firebaseConfig);
-  console.log('DEBUG: process.env.FIREBASE_CONFIG length:', firebaseConfig?.length || 0);
-  console.log('DEBUG: process.env.FIREBASE_CONFIG starts with {:', firebaseConfig?.startsWith('{'));
-  console.log('DEBUG: process.env.FIREBASE_API_KEY_HEX exists:', !!firebaseApiKeyHex);
-  console.log('DEBUG: process.env.DUMMY_SECRET_TEST exists:', !!process.env.DUMMY_SECRET_TEST);
-  console.log('DEBUG: process.env.JWT_PRIVATE_KEY exists:', !!process.env.JWT_PRIVATE_KEY);
 
   if (firebaseConfig) {
     try {
       parsedFirebaseConfig = JSON.parse(firebaseConfig);
-      console.log('DEBUG: Parsed Firebase config successfully');
-      console.log('DEBUG: Firebase config has apiKey:', !!parsedFirebaseConfig?.apiKey);
-      console.log('DEBUG: Firebase config has projectId:', !!parsedFirebaseConfig?.projectId);
-      
-      // If apiKey is missing from main config, convert hex to string and use it
-      if (!parsedFirebaseConfig?.apiKey && firebaseApiKeyHex) {
-        console.log('DEBUG: Converting hex API key and filling missing apiKey');
-        try {
-          const apiKey = hexToString(firebaseApiKeyHex);
-          parsedFirebaseConfig.apiKey = apiKey;
-          console.log('DEBUG: Successfully converted hex to API key');
-        } catch (error) {
-          console.error('DEBUG: Failed to convert hex API key:', error);
-        }
-      }
-    } catch (error) {
-      console.error('FIREBASE_CONFIG environment variable contains invalid JSON:', error);
-      console.error('DEBUG: Raw FIREBASE_CONFIG value:', firebaseConfig);
+    } catch {
+      console.error('FIREBASE_CONFIG environment variable contains invalid JSON');
     }
-  } else {
-    console.error('DEBUG: FIREBASE_CONFIG environment variable is not set');
   }
 
   return {

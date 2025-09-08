@@ -16,7 +16,7 @@ env:
       - BUILD
       - RUNTIME
   - variable: ML_SERVICE_URL
-    value: https://titanic-ml-service-stg-411470717307.us-central1.run.app
+    value: https://titanic-ml-service-411470717307.us-central1.run.app
     availability:
       - BUILD
       - RUNTIME

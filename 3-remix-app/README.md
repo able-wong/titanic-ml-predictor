@@ -1,296 +1,220 @@
-# Remix Cloudflare Starter
+# Titanic ML Predictor - Remix App
 
-A modern full-stack web application boilerplate featuring **Remix** and **Cloudflare Pages** with optional **Firebase** integration. Get from zero to production-ready application in minutes.
+Full-stack Remix application for Titanic survival predictions with Firebase Authentication and ML service integration.
 
-> 🚨 **First Step**: After cloning, change the project name from `remix-cloudflare-starter` to something unique in both `wrangler.jsonc` and `package.json` before deploying!
+## Overview
 
-## 🚀 What You Get
-
-- **Full-stack capabilities** with Remix server actions and loaders
-- **Global edge deployment** on Cloudflare Pages
-- **Optional Firebase integration** for authentication, database, and storage
-- **Optional AI features** with Vercel AI
-- **Modern UI** with TailwindCSS v4 + DaisyUI v5
-- **Type safety** with TypeScript
-- **Testing setup** with Jest
-- **Development tools** configured and ready
-
-## 🎯 Next Steps
-
-1. **Customize the UI** - Edit components in `app/components/`
-2. **Add routes** - Create new files in `app/routes/`
-3. **Business logic** - Add services in `app/services/`
-4. **Add tests** - Create tests in `app/__tests__/`
-5. **Setup Firebase** (optional) - See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for complete configuration
-6. **Setup AI** (optional) - See [AI.md](./AI.md) for Vercel AI SDK configuration
+This Remix app provides a web interface for the Titanic ML prediction service, featuring:
+- Firebase Authentication (Google Sign-in)
+- Real-time ML predictions via REST API
+- JWT-based API security
+- Firebase App Hosting deployment
 
 ## Prerequisites
 
-- **Node.js 18+**
-- **npm**
-- **Wrangler CLI**: `npm install -g wrangler`
+- Node.js 20+
+- Firebase CLI: `npm install -g firebase-tools`
+- GCP CLI: `gcloud` installed and configured
+- Firebase project with billing enabled
 
-## ⚡ Quick Start
-
-```bash
-# 1. Clone and install
-git clone <your-repo-url>
-cd remix-cloudflare-starter
-
-# Install dependencies (use --legacy-peer-deps due to Wrangler v4/Remix v2 compatibility)
-npm install --legacy-peer-deps
-
-# 2. Customize project name (IMPORTANT!)
-# Update project name in the following files:
-# - wrangler.jsonc (change "name" field)
-# - package.json (change "name" field)
-
-# 3. Start development
-npm run dev
-```
-
-> 💡 **Important**: Change the project name from `remix-cloudflare-starter` to something unique for your project. This name will become part of your deployment URL: `your-project-name.pages.dev`
-
-Open [http://localhost:5173](http://localhost:5173) to see your app running!
-
-## 🛠 Setup Guide
-
-### 1. Cloudflare Pages Deployment
-
-1. **Customize Project Name (Required):**
-
-   **⚠️ Before deploying, you MUST change the project name from the generic `remix-cloudflare-starter`:**
-
-   ```bash
-   # Edit wrangler.jsonc
-   # Change: "name": "remix-cloudflare-starter"
-   # To: "name": "your-chosen-app-name"
-
-   # Edit package.json
-   # Change: "name": "remix-cloudflare-starter"
-   # To: "name": "your-chosen-app-name"
-   ```
-
-   > 💡 **Name Examples**: `bookfinder-hub`, `literaly-search`, `my-portfolio`, `company-website`. Pick something that represents your project!
-
-2. **Create Cloudflare Pages Project:**
-
-   - Go to [Cloudflare Pages](https://dash.cloudflare.com/pages)
-   - Create new project with the same name you used above
-   - Or let Wrangler create it automatically on first deployment
-
-3. **Configure Deployment:**
-
-   ```bash
-   # Login to Cloudflare
-   wrangler auth login
-
-   # Verify your project name is updated
-   npm run test-cloudflare
-   ```
-
-4. **Deploy:**
-
-   ```bash
-   npm run deploy
-   ```
-
-### 2. Firebase Integration (Optional)
-
-**Firebase provides authentication, database, and storage services.**
-
-> 📖 **Complete Setup Guide**: For Firebase configuration, see [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
-
-If you don't need Firebase, you can skip this step and use the application as a static Remix app on Cloudflare Pages.
-
-## 🔧 Development Commands
+## Quick Start
 
 ```bash
-# Development
-npm run dev             # Start development server
-npm run build           # Build for production
-npm run deploy          # Deploy to Cloudflare Pages
+# Install dependencies
+npm install
 
-# Testing & Quality
-npm test               # Run tests
-npm run lint           # Lint code
-npm run format         # Format code
-npm run typecheck      # TypeScript checking
+# Development with staging environment
+npm run dev:stg
 
-# Configuration Testing
-npm run test-cloudflare # Test Cloudflare setup and deployment readiness
-npm run test-firebase   # Test Firebase configuration (if using Firebase)
-
-# Firebase Data Management (if using Firebase)
-npm run fetch-firebase  # Generic Firebase data fetcher
-npm run import-firestore # Import JSON data to Firestore
+# Development with production environment  
+npm run dev:prd
 ```
 
----
+## Firebase App Hosting Deployment
 
-## 🔬 Running Integration Tests
+### Initial Setup
 
-To run the Firestore integration tests, follow these steps **after cloning the project**:
+1. **Create Firebase Projects:**
+   - Create staging project: `titanic-ml-predictor-stg`
+   - Create production project: `titanic-ml-predictor-prd`
 
-1. **Set up Firebase**
+2. **Initialize App Hosting:**
+   ```bash
+   firebase init apphosting
+   ```
 
-   - Follow the detailed instructions in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) to:
-     - Create a Firebase project
-     - Enable Firestore
-     - Set up authentication (optional)
-     - Generate and configure environment variables
+3. **Configure Secrets in GCP:**
+   ```bash
+   # Create Firebase config secret (staging)
+   echo '{"projectId":"titanic-ml-predictor-stg","appId":"...","apiKey":"..."}' | \
+     gcloud secrets create firebase-config-stg --data-file=- --project=titanic-ml-predictor-stg
+   
+   # Create JWT private key secret
+   echo 'your-jwt-private-key' | \
+     gcloud secrets create jwt-private-key --data-file=- --project=titanic-ml-predictor-stg
+   ```
 
-2. **Initialize Firebase in your project**
+4. **Grant App Hosting Access to Secrets:**
+   ```bash
+   # List backends
+   firebase apphosting:backends:list --project=titanic-ml-predictor-stg
+   
+   # Grant access (replace 'app' with your backend ID)
+   firebase apphosting:secrets:grantaccess firebase-config-stg --backend=app --project=titanic-ml-predictor-stg
+   firebase apphosting:secrets:grantaccess jwt-private-key --backend=app --project=titanic-ml-predictor-stg
+   ```
 
-   - Run `firebase init` if you haven't already.
-   - **Important:** When prompted, **do not overwrite** your existing `firestore.rules` and `firestore.indexes.json` files. Choose "No" to keep the existing files.
+### apphosting.yaml Configuration
 
-3. **Deploy Firestore Rules and Indexes**
+**Important:** Firebase App Hosting uses a single `env:` section. Secrets are referenced with `secret:` instead of `value:`.
 
-   - Deploy your security rules and indexes to Firestore:
+```yaml
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  maxInstances: 4
+  minInstances: 0
+  concurrency: 5
 
-     ```sh
-     firebase deploy --only firestore:rules
-     firebase deploy --only firestore:indexes
-     ```
+env:
+  # Regular environment variables
+  - variable: FIREBASE_PROJECT_ID
+    value: titanic-ml-predictor-stg
+    availability:
+      - BUILD
+      - RUNTIME
+      
+  # Secret references (NOT in a separate secrets section)
+  - variable: FIREBASE_CONFIG
+    secret: firebase-config-stg  # References GCP secret
+    availability:
+      - BUILD
+      - RUNTIME
+      
+  - variable: JWT_PRIVATE_KEY
+    secret: jwt-private-key
+    availability:
+      - BUILD
+      - RUNTIME
+```
 
-4. **Import Test Data**
+### Deployment
 
-   - Import the test data into Firestore using the provided script:
+```bash
+# Deploy to staging
+firebase deploy --only apphosting --project=titanic-ml-predictor-stg
 
-     ```sh
-     node scripts/import-firestore-data.js app/__tests__/test-data/books.json test-books-integration --clear
-     ```
+# Deploy to production
+firebase deploy --only apphosting --project=titanic-ml-predictor-prd
+```
 
-5. **Configure Environment Variables**
+## Environment Configuration
 
-   - Copy the example environment file and fill in your Firebase credentials:
+### Local Development (.env files)
 
-     ```sh
-     cp .dev.vars.example .dev.vars
-     ```
+Create `.env.stg` and `.env.prd` files:
 
-   - Edit `.dev.vars` and set the values for:
-     - `FIREBASE_CONFIG`
-     - `FIREBASE_PROJECT_ID`
-     - `FIREBASE_SERVICE_ACCOUNT_KEY`
-   - See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for details on obtaining these values.
+```bash
+# Firebase Configuration
+FIREBASE_CONFIG={"projectId":"...","apiKey":"...","authDomain":"..."}
 
-6. **Run Integration Tests**
-   - Your environment is now ready! Run the integration tests:
+# ML Service
+ML_SERVICE_URL=https://titanic-ml-service-stg-411470717307.us-central1.run.app
 
-     ```sh
-     npx jest app/integration-tests/services/firebase-restapi.integration.test.ts
-     ```
+# JWT Configuration
+JWT_PRIVATE_KEY=your-private-key
+JWT_TTL=5m
+```
 
----
+### Production Secrets (GCP Secret Manager)
 
-## 📁 Project Structure
+All sensitive data should be stored in GCP Secret Manager:
+- `firebase-config-stg` / `firebase-config-prd` - Firebase configuration JSON
+- `jwt-private-key` - JWT signing key
 
-```text
+## Useful Commands
+
+### Firebase App Hosting
+
+```bash
+# Backend Management
+firebase apphosting:backends:list --project=PROJECT_ID
+firebase apphosting:backends:get BACKEND_ID --project=PROJECT_ID
+
+# Secret Access Management
+firebase apphosting:secrets:grantaccess SECRET_NAME --backend=BACKEND_ID --project=PROJECT_ID
+firebase apphosting:secrets:describe SECRET_NAME --project=PROJECT_ID
+
+# Deployment History
+firebase apphosting:rollouts:list --backend=BACKEND_ID --project=PROJECT_ID
+```
+
+### GCP Secret Manager
+
+```bash
+# List all secrets
+gcloud secrets list --project=PROJECT_ID
+
+# View secret value
+gcloud secrets versions access latest --secret=SECRET_NAME --project=PROJECT_ID
+
+# Update secret
+echo 'new-value' | gcloud secrets versions add SECRET_NAME --data-file=- --project=PROJECT_ID
+
+# Delete secret
+gcloud secrets delete SECRET_NAME --project=PROJECT_ID
+```
+
+### Debugging
+
+```bash
+# View App Hosting logs
+gcloud app logs tail --project=PROJECT_ID
+
+# Check secret permissions
+gcloud secrets get-iam-policy SECRET_NAME --project=PROJECT_ID
+
+# Test Firebase configuration
+firebase apps:sdkconfig web APP_ID --project=PROJECT_ID
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Permission denied" for secrets:**
+   - Run `firebase apphosting:secrets:grantaccess` for each secret
+   - Verify with `gcloud secrets get-iam-policy SECRET_NAME`
+
+2. **Environment variables not available:**
+   - Ensure variables are in single `env:` section (not separate `secrets:` section)
+   - Check `availability` includes `RUNTIME` for runtime variables
+
+3. **Firebase Auth initialization fails:**
+   - Verify `FIREBASE_CONFIG` secret contains complete JSON with `apiKey`
+   - Check App Hosting has access to the secret
+
+4. **Build failures:**
+   - Review App Hosting logs: `gcloud app logs tail`
+   - Verify all secrets exist: `gcloud secrets list`
+
+## Project Structure
+
+```
 app/
-├── routes/          # Remix routes (pages & API)
-├── services/        # Business logic (includes optional Firebase integration)
-├── components/      # Reusable UI components
-├── utils/           # Utility functions
-└── __tests__/       # Test files
+├── routes/          # Remix routes
+├── services/        # Business logic
+├── components/      # React components
+├── contexts/        # React contexts (Auth)
+├── utils/          # Utilities
+└── interfaces/     # TypeScript interfaces
 
-public/              # Static assets
-functions/           # Cloudflare Pages functions
+apphosting.stg.yaml  # Staging App Hosting config
+apphosting.prd.yaml  # Production App Hosting config
 ```
 
-## 🔍 Tech Stack
+## Related Documentation
 
-- **Framework:** Remix on Cloudflare Pages
-- **Frontend:** React 18, TypeScript, TailwindCSS v4, DaisyUI v5
-- **Backend:** Optional Firebase (Auth, Firestore, Storage)
-- **Build:** Vite
-- **Testing:** Jest
-- **Deployment:** Cloudflare Pages with global edge network
-
-## ✅ Verify Your Setup
-
-### Before Deployment
-
-Run the configuration test to ensure everything is ready:
-
-```bash
-npm run test-cloudflare
-```
-
-This will check:
-
-- ✅ Project name has been customized (not using generic `remix-cloudflare-starter`)
-- ✅ Wrangler authentication
-- ✅ Build process works
-- ✅ Deployment readiness
-
-### Firebase Configuration (Optional)
-
-If you're using Firebase services, test your Firebase setup:
-
-```bash
-npm run test-firebase
-```
-
-This will check:
-
-- ✅ Environment variables are properly configured
-- ✅ Firebase configuration JSON is valid
-- ✅ Service account credentials work
-- ✅ Firestore database connection
-- ✅ Authentication setup
-
-### After Deployment
-
-After deployment, verify:
-
-- ✅ Site loads at `https://your-project-name.pages.dev`
-- ✅ Development server works: `npm run dev`
-- ✅ Tests pass: `npm test`
-- ✅ Firebase connection (if enabled)
-
-## 🚨 Troubleshooting
-
-**Dependency Installation:**
-
-- **npm install fails with ERESOLVE errors**: This project uses Wrangler v4 which has peer dependency conflicts with Remix v2. Use `npm install --legacy-peer-deps` to resolve this. This is a known compatibility issue between newer Wrangler versions and current Remix versions.
-
-**Deployment Issues:**
-
-- **Project name conflicts**: If you get deployment errors, ensure you've changed the project name from `remix-cloudflare-starter` to something unique
-- **Authentication issues**: Ensure Wrangler is authenticated: `wrangler auth login`
-- **Configuration problems**: Check project name matches in both `wrangler.jsonc` and `package.json`
-- **Diagnosis tool**: Run `npm run test-cloudflare` to identify and fix deployment issues
-
-**Development Issues:**
-
-- **Dependency issues**: Clear cache: `rm -rf node_modules package-lock.json && npm install`
-- **Version compatibility**: Check Node.js version: `node --version` (should be 18+)
-
-**Firebase Issues:**
-
-- **Configuration problems**: Run `npm run test-firebase` to diagnose Firebase setup issues
-- **Environment variables**: Ensure `.dev.vars` exists and contains all required Firebase variables
-- **Service account**: Verify `FIREBASE_SERVICE_ACCOUNT_KEY` is valid JSON
-- **Complete guide**: See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for detailed Firebase troubleshooting
-
-## 📚 Resources
-
+- [Firebase App Hosting](https://firebase.google.com/docs/app-hosting)
 - [Remix Documentation](https://remix.run/docs)
-- [Cloudflare Pages](https://developers.cloudflare.com/pages/)
-- [TailwindCSS](https://tailwindcss.com/docs)
-- [DaisyUI Components](https://daisyui.com/components/)
-- [Firebase Setup Guide](./FIREBASE_SETUP.md) (optional)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
-
----
-
-**Ready to build something amazing?** Start with `npm run dev` and see your app come to life! 🎉
+- [GCP Secret Manager](https://cloud.google.com/secret-manager/docs)
