@@ -9,8 +9,6 @@ env:
     value: https://titanic-ml-service-prd-872609158824.us-central1.run.app
   - variable: JWT_TTL
     value: 5m
-  - variable: GOOGLE_NODE_RUN_SCRIPTS
-    value: 0
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
 secrets:
@@ -22,11 +20,10 @@ secrets:
 # Build configuration to fix npm optional dependencies bug
 build:
   commands:
-    - rm -rf node_modules
     - npm install
     - npm run build
 
-# Runtime configuration  
+# Runtime configuration
 runtime: nodejs20
 
 # CPU and memory allocation (production resources)
