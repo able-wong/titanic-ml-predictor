@@ -10,7 +10,7 @@ env:
   - variable: JWT_TTL
     value: 5m
   - variable: GOOGLE_NODE_RUN_SCRIPTS
-    value: ""
+    value: 0
 
 # Secrets (managed via Firebase Console under App Hosting > Secrets)
 secrets:
