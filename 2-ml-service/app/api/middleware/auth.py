@@ -71,12 +71,14 @@ class AuthService:
         else:
             expire = datetime.now(timezone.utc) + timedelta(minutes=self.expire_minutes)
 
-        to_encode.update({
-            "exp": expire, 
-            "iat": datetime.now(timezone.utc),
-            "aud": "ml-service",
-            "iss": "titanic-ml-predictor"
-        })
+        to_encode.update(
+            {
+                "exp": expire,
+                "iat": datetime.now(timezone.utc),
+                "aud": "ml-service",
+                "iss": "titanic-ml-predictor",
+            }
+        )
 
         try:
             # Encode token with private key
@@ -134,11 +136,11 @@ class AuthService:
         try:
             # Decode token with public key and validate audience/issuer
             payload = jwt.decode(
-                token, 
-                self.public_key, 
+                token,
+                self.public_key,
                 algorithms=[self.algorithm],
                 audience="ml-service",
-                issuer="titanic-ml-predictor"
+                issuer="titanic-ml-predictor",
             )
 
             # Extract user information

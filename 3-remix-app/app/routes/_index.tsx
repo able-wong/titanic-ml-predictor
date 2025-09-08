@@ -1,6 +1,6 @@
 import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import { createLogger } from '~/utils/logger';
 import { useAuth } from '~/contexts/AuthContext';
 import { SignInButton } from '~/components/auth/SignInButton';
@@ -37,7 +37,8 @@ export async function loader(_args: LoaderFunctionArgs) {
 
 export default function Index() {
   const { env } = useLoaderData<typeof loader>();
-  const { user, loading, initialized, logout, signInWithGoogle } = useAuth();
+  const { user, loading, initialized, logout, signInWithGoogle, authChecked } = useAuth();
+  const navigate = useNavigate();
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     localStorage.setItem('theme', newTheme);
@@ -121,22 +122,22 @@ export default function Index() {
                 }
               </p>
               <div className="flex justify-center">
-                {!user && (
-                  <SignInButton 
-                    className="btn btn-primary btn-lg justify-center" 
-                    onSuccess={() => {
-                      // Redirect to prediction form after successful login
-                      window.location.href = '/predict';
-                    }}
-                  />
-                )}
-                {user && (
+                {/* Show sign-in button by default, switch to "Start Predicting" when authenticated */}
+                {user ? (
                   <button 
-                    onClick={() => window.location.href = '/predict'}
+                    onClick={() => navigate('/predict')}
                     className="btn btn-primary btn-lg"
                   >
                     Start Predicting
                   </button>
+                ) : (
+                  <SignInButton 
+                    className="btn btn-primary btn-lg justify-center" 
+                    onSuccess={() => {
+                      // Navigate to prediction form after successful login
+                      navigate('/predict');
+                    }}
+                  />
                 )}
               </div>
             </div>
@@ -201,29 +202,6 @@ export default function Index() {
         </div>
 
 
-        {/* Success message only when authenticated */}
-        {user && initialized && (
-          <div className="space-y-4">
-            <div className="alert alert-success">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                className="stroke-current shrink-0 w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span>
-                Authentication successful! You can now make ML predictions.
-              </span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

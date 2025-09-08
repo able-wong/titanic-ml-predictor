@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signOut, 
-  onAuthStateChanged, 
+  onAuthStateChanged,
   type Auth 
 } from 'firebase/auth';
 import { getFirebaseAuth } from '../utils/firebase';
@@ -21,6 +21,7 @@ export interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   initialized: boolean;
+  authChecked: boolean; // True once auth state has been determined
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,8 +33,9 @@ export interface AuthProviderProps {
 
 export function AuthProvider({ children, env }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // For auth operations
   const [initialized, setInitialized] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false); // Track if auth state has been checked
 
   useEffect(() => {
     let auth: Auth;
@@ -44,15 +46,17 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
         auth = await getFirebaseAuth(env);
         setInitialized(true);
         
-        // Set up auth state listener
+        // Set up auth state listener - this will fire when Firebase determines auth state
         unsubscribe = onAuthStateChanged(auth, (user) => {
           setUser(user);
-          setLoading(false);
+          setAuthChecked(true); // Mark as checked when we get the first callback
+          setLoading(false); // Reset loading after auth operations
         });
       } catch (error) {
         console.error('Failed to initialize Firebase Auth:', error);
         setLoading(false);
-        setInitialized(false);
+        setInitialized(true);
+        setAuthChecked(true);
       }
     };
 
@@ -70,6 +74,8 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
     if (!initialized) {
       throw new Error('Firebase Auth not initialized');
     }
+
+    setLoading(true); // Set loading when sign-in starts
 
     try {
       const auth = await getFirebaseAuth(env);
@@ -94,6 +100,8 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
       } else {
         throw new Error(`Sign-in failed: ${error.message}`);
       }
+    } finally {
+      setLoading(false); // Always reset loading state
     }
   };
 
@@ -102,6 +110,8 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
       throw new Error('Firebase Auth not initialized');
     }
 
+    setLoading(true); // Set loading when sign-out starts
+
     try {
       const auth = await getFirebaseAuth(env);
       await signOut(auth);
@@ -109,6 +119,8 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
     } catch (error: any) {
       console.error('Sign-out error:', error);
       throw new Error(`Sign-out failed: ${error.message}`);
+    } finally {
+      setLoading(false); // Always reset loading state
     }
   };
 
@@ -118,6 +130,7 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
     signInWithGoogle,
     logout,
     initialized,
+    authChecked,
   };
 
   return (
@@ -138,18 +151,3 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-/**
- * Hook to require authentication - redirects if not authenticated
- */
-export function useRequireAuth(): AuthContextType {
-  const auth = useAuth();
-  
-  useEffect(() => {
-    if (!auth.loading && !auth.user && auth.initialized) {
-      // In a real app, you might redirect to sign-in page
-      console.warn('Authentication required but user is not signed in');
-    }
-  }, [auth.loading, auth.user, auth.initialized]);
-
-  return auth;
-}

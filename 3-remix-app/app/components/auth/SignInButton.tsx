@@ -19,7 +19,7 @@ export function SignInButton({
   onSuccess,
   onError 
 }: SignInButtonProps) {
-  const { signInWithGoogle, loading: authLoading } = useAuth();
+  const { signInWithGoogle, loading: authLoading, initialized } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -33,7 +33,7 @@ export function SignInButton({
   }, []);
 
   const handleSignIn = async () => {
-    if (isSigningIn || authLoading) return;
+    if (isSigningIn || !initialized) return;
     
     setIsSigningIn(true);
     
@@ -61,13 +61,14 @@ export function SignInButton({
     }
   };
 
-  const isLoading = isSigningIn || authLoading;
+  // Only show loading when user is actively signing in, not during initial auth initialization
+  const isLoading = isSigningIn;
 
   return (
     <button
       type="button"
       onClick={handleSignIn}
-      disabled={disabled || isLoading}
+      disabled={disabled || isLoading || !initialized}
       className={`
         flex items-center justify-center gap-3 px-4 py-2 
         bg-white border border-gray-300 rounded-lg
