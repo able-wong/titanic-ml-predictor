@@ -15,7 +15,7 @@ export interface PredictionServiceOptions {
 
 export interface PredictionServiceResult {
   success: boolean;
-  prediction?: any;
+  prediction?: unknown;
   input?: PredictionRequest;
   error?: string;
   details?: string;

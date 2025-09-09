@@ -5,8 +5,8 @@ import React, { useState } from 'react';
 import { ProtectedRoute } from '~/components/auth/ProtectedRoute';
 import { useAuth } from '~/contexts/AuthContext';
 import { getClientEnv } from '~/utils/env';
-import type { PredictionRequest } from '~/services/mlService';
 import type { PredictionServiceResult } from '~/services/predictionService';
+import type { PredictionResponse } from '~/services/mlService';
 
 export const meta: MetaFunction = () => {
   return [
@@ -25,7 +25,7 @@ export async function loader(_args: LoaderFunctionArgs) {
 
 
 export default function Predict() {
-  const { env } = useLoaderData<typeof loader>();
+  const { env: _env } = useLoaderData<typeof loader>();
   const { user, loading, initialized, logout, signInWithGoogle } = useAuth();
   const [showResults, setShowResults] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
@@ -78,7 +78,7 @@ export default function Predict() {
       });
 
       const result = await response.json();
-      setPredictionResult(result);
+      setPredictionResult(result as PredictionServiceResult);
     } catch (error) {
       console.error('Prediction request failed:', error);
       setPredictionResult({
@@ -121,7 +121,7 @@ export default function Predict() {
                     <span className="text-sm">
                       Hi, {user.displayName?.split(' ')[0] || 'User'} |{' '}
                       <button 
-                        onClick={handleSignOut}
+                        onClick={() => void handleSignOut()}
                         className="link link-hover"
                       >
                         Sign out
@@ -129,7 +129,7 @@ export default function Predict() {
                     </span>
                   ) : (
                     <button 
-                      onClick={() => signInWithGoogle().catch(console.error)}
+                      onClick={() => void signInWithGoogle().catch(console.error)}
                       className="link link-hover text-sm"
                     >
                       Sign in
@@ -182,7 +182,7 @@ export default function Predict() {
           {/* Prediction Form */}
           {!showResults && !showProgress && (
           <form 
-            onSubmit={handleSubmit}
+            onSubmit={(e) => void handleSubmit(e)}
             ref={(ref) => setFormRef(ref)}
           >
             
@@ -192,10 +192,10 @@ export default function Predict() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="pclass">
                       <span className="label-text font-medium">Passenger Class</span>
                     </label>
-                    <select name="pclass" className="select select-bordered w-full" defaultValue="" required>
+                    <select id="pclass" name="pclass" className="select select-bordered w-full" defaultValue="" required>
                       <option disabled value="">Select class</option>
                       <option value="1">1st Class</option>
                       <option value="2">2nd Class</option>
@@ -204,10 +204,10 @@ export default function Predict() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="sex">
                       <span className="label-text font-medium">Gender</span>
                     </label>
-                    <select name="sex" className="select select-bordered w-full" defaultValue="" required>
+                    <select id="sex" name="sex" className="select select-bordered w-full" defaultValue="" required>
                       <option disabled value="">Select gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -215,10 +215,11 @@ export default function Predict() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="age">
                       <span className="label-text font-medium">Age</span>
                     </label>
                     <input 
+                      id="age"
                       name="age"
                       type="number" 
                       placeholder="Enter age" 
@@ -231,10 +232,11 @@ export default function Predict() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="fare">
                       <span className="label-text font-medium">Fare Paid ($)</span>
                     </label>
                     <input 
+                      id="fare"
                       name="fare"
                       type="number" 
                       placeholder="Enter fare amount" 
@@ -246,10 +248,11 @@ export default function Predict() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="sibsp">
                       <span className="label-text font-medium">Siblings/Spouses</span>
                     </label>
                     <input 
+                      id="sibsp"
                       name="sibsp"
                       type="number" 
                       placeholder="Number of siblings/spouses aboard" 
@@ -261,10 +264,11 @@ export default function Predict() {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="parch">
                       <span className="label-text font-medium">Parents/Children</span>
                     </label>
                     <input 
+                      id="parch"
                       name="parch"
                       type="number" 
                       placeholder="Number of parents/children aboard" 
@@ -276,10 +280,10 @@ export default function Predict() {
                   </div>
 
                   <div className="form-control w-full md:col-span-2">
-                    <label className="label">
+                    <label className="label" htmlFor="embarked">
                       <span className="label-text font-medium">Port of Embarkation</span>
                     </label>
-                    <select name="embarked" className="select select-bordered w-full" defaultValue="" required>
+                    <select id="embarked" name="embarked" className="select select-bordered w-full" defaultValue="" required>
                       <option disabled value="">Select port</option>
                       <option value="C">Cherbourg (C)</option>
                       <option value="Q">Queenstown (Q)</option>
@@ -350,17 +354,17 @@ export default function Predict() {
                 ) : 'prediction' in predictionResult && predictionResult.prediction ? (
                   <div className="space-y-4">
                     {/* Ensemble Result */}
-                    <div className={`alert ${predictionResult.prediction.ensemble_result.prediction === 'survived' ? 'alert-success' : 'alert-warning'}`}>
+                    <div className={`alert ${(predictionResult.prediction as PredictionResponse).ensemble_result.prediction === 'survived' ? 'alert-success' : 'alert-warning'}`}>
                       <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
                         <h3 className="font-bold">
-                          {predictionResult.prediction.ensemble_result.prediction === 'survived' ? '✅ Likely Survived' : '❌ Likely Did Not Survive'}
+                          {(predictionResult.prediction as PredictionResponse).ensemble_result.prediction === 'survived' ? '✅ Likely Survived' : '❌ Likely Did Not Survive'}
                         </h3>
                         <div className="text-xs">
-                          Survival Probability: {Math.round(predictionResult.prediction.ensemble_result.probability * 100)}% 
-                          ({predictionResult.prediction.ensemble_result.confidence_level} confidence)
+                          Survival Probability: {Math.round((predictionResult.prediction as PredictionResponse).ensemble_result.probability * 100)}% 
+                          ({(predictionResult.prediction as PredictionResponse).ensemble_result.confidence_level} confidence)
                         </div>
                       </div>
                     </div>
@@ -371,10 +375,10 @@ export default function Predict() {
                         <div className="stat">
                           <div className="stat-title">Logistic Regression</div>
                           <div className="stat-value text-sm">
-                            {Math.round(predictionResult.prediction.individual_models.logistic_regression.probability * 100)}%
+                            {Math.round((predictionResult.prediction as PredictionResponse).individual_models.logistic_regression.probability * 100)}%
                           </div>
                           <div className="stat-desc">
-                            {predictionResult.prediction.individual_models.logistic_regression.prediction === 'survived' ? 'Survived' : 'Did not survive'}
+                            {(predictionResult.prediction as PredictionResponse).individual_models.logistic_regression.prediction === 'survived' ? 'Survived' : 'Did not survive'}
                           </div>
                         </div>
                       </div>
@@ -383,10 +387,10 @@ export default function Predict() {
                         <div className="stat">
                           <div className="stat-title">Decision Tree</div>
                           <div className="stat-value text-sm">
-                            {Math.round(predictionResult.prediction.individual_models.decision_tree.probability * 100)}%
+                            {Math.round((predictionResult.prediction as PredictionResponse).individual_models.decision_tree.probability * 100)}%
                           </div>
                           <div className="stat-desc">
-                            {predictionResult.prediction.individual_models.decision_tree.prediction === 'survived' ? 'Survived' : 'Did not survive'}
+                            {(predictionResult.prediction as PredictionResponse).individual_models.decision_tree.prediction === 'survived' ? 'Survived' : 'Did not survive'}
                           </div>
                         </div>
                       </div>

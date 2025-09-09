@@ -3,7 +3,7 @@
  * Provides Google authentication with loading states and error handling
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export interface SignInButtonProps {
@@ -19,7 +19,7 @@ export function SignInButton({
   onSuccess,
   onError 
 }: SignInButtonProps) {
-  const { signInWithGoogle, loading: authLoading, initialized } = useAuth();
+  const { signInWithGoogle, loading: _authLoading, initialized } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -47,8 +47,8 @@ export function SignInButton({
     try {
       await signInWithGoogle();
       onSuccess?.();
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to sign in with Google';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in with Google';
       console.error('Sign-in error:', errorMessage);
       onError?.(errorMessage);
     } finally {
@@ -67,7 +67,7 @@ export function SignInButton({
   return (
     <button
       type="button"
-      onClick={handleSignIn}
+      onClick={() => void handleSignIn()}
       disabled={disabled || isLoading || !initialized}
       className={`
         flex items-center justify-center gap-3 px-4 py-2 

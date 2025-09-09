@@ -3,7 +3,7 @@
  * Shows user information and provides sign-out functionality
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export interface UserProfileProps {
@@ -34,7 +34,7 @@ export function UserProfile({
     try {
       await logout();
       onSignOut?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign-out error:', error);
     } finally {
       setIsSigningOut(false);
@@ -76,7 +76,7 @@ export function UserProfile({
       {showSignOut && (
         <button
           type="button"
-          onClick={handleSignOut}
+          onClick={() => void handleSignOut()}
           disabled={isSigningOut}
           className="
             px-3 py-1 text-xs font-medium text-gray-600

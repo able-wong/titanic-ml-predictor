@@ -6,7 +6,7 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { getServerEnv } from './env';
 
-export interface JWTTokenData extends Record<string, any> {
+export interface JWTTokenData extends Record<string, unknown> {
   user_id: string;
   username?: string;
 }
@@ -67,7 +67,8 @@ export async function verifyAccessToken(token: string): Promise<DecodedToken> {
 
     return payload as DecodedToken;
   } catch (error) {
-    throw new Error(`JWT verification failed: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`JWT verification failed: ${errorMessage}`);
   }
 }
 
@@ -84,7 +85,7 @@ export function decodeToken(token: string): JWTPayload | null {
     const payload = parts[1];
     const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -128,7 +129,8 @@ async function importPrivateKey(privateKeyPem: string): Promise<CryptoKey> {
       ['sign']
     );
   } catch (error) {
-    throw new Error(`Failed to import private key: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to import private key: ${errorMessage}`);
   }
 }
 
@@ -174,7 +176,8 @@ async function importPublicKeyFromPrivate(privateKeyPem: string): Promise<Crypto
       ['verify']
     );
   } catch (error) {
-    throw new Error(`Failed to derive public key: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to derive public key: ${errorMessage}`);
   }
 }
 
