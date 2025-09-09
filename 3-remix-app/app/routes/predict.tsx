@@ -1,12 +1,12 @@
-import type { MetaFunction, LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { useLoaderData, useActionData, Form, useNavigation } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import React, { useState } from 'react';
 import { ProtectedRoute } from '~/components/auth/ProtectedRoute';
 import { useAuth } from '~/contexts/AuthContext';
 import { getClientEnv } from '~/utils/env';
-import { makePrediction } from '~/services/predictionService';
 import type { PredictionRequest } from '~/services/mlService';
+import type { PredictionServiceResult } from '~/services/predictionService';
 
 export const meta: MetaFunction = () => {
   return [
@@ -23,48 +23,14 @@ export async function loader(_args: LoaderFunctionArgs) {
   return json({ env: clientEnv });
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  // Parse form data to get Firebase ID token
-  const formData = await request.formData();
-  const firebaseToken = formData.get('firebaseToken') as string;
-  
-  if (!firebaseToken) {
-    return json({ error: 'Authentication token required' }, { status: 401 });
-  }
-
-  // Extract prediction parameters
-  const predictionData: PredictionRequest = {
-    pclass: parseInt(formData.get('pclass') as string),
-    sex: formData.get('sex') as string,
-    age: parseFloat(formData.get('age') as string),
-    sibsp: parseInt(formData.get('sibsp') as string),
-    parch: parseInt(formData.get('parch') as string),
-    fare: parseFloat(formData.get('fare') as string),
-    embarked: formData.get('embarked') as string,
-  };
-
-  // Use shared prediction service (eliminates redundant token verification and network hop)
-  const result = await makePrediction({ firebaseToken, predictionData });
-
-  if (!result.success) {
-    const status = result.error === 'Authentication failed' ? 401 : 
-                   result.missingFields ? 400 : 500;
-    return json(result, { status });
-  }
-
-  return json(result);
-}
 
 export default function Predict() {
   const { env } = useLoaderData<typeof loader>();
   const { user, loading, initialized, logout, signInWithGoogle } = useAuth();
-  const actionData = useActionData<typeof action>();
-  const navigation = useNavigation();
   const [showResults, setShowResults] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
   const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
-
-  const isSubmitting = navigation.state === 'submitting';
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     localStorage.setItem('theme', newTheme);
@@ -80,8 +46,9 @@ export default function Predict() {
     }
   };
 
-  // State to hold Firebase token
+  // State to hold Firebase token and prediction result
   const [firebaseToken, setFirebaseToken] = useState<string>('');
+  const [predictionResult, setPredictionResult] = useState<PredictionServiceResult | null>(null);
 
   // Get Firebase ID token when user is available
   React.useEffect(() => {
@@ -92,10 +59,37 @@ export default function Predict() {
     }
   }, [user]);
 
-  // Handle form submission
-  const handleSubmit = () => {
+  // Handle form submission with fetch API and Authorization header
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
     setShowProgress(true);
     setShowResults(false);
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      
+      const response = await fetch('/api/predict', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${firebaseToken}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+      setPredictionResult(result);
+    } catch (error) {
+      console.error('Prediction request failed:', error);
+      setPredictionResult({
+        success: false,
+        error: 'Failed to make prediction request'
+      });
+    } finally {
+      setIsSubmitting(false);
+      setShowProgress(false);
+      setShowResults(true);
+    }
   };
 
   // Handle making another prediction
@@ -107,13 +101,6 @@ export default function Predict() {
     }
   };
 
-  // Show results when action data is available and submission is complete
-  React.useEffect(() => {
-    if (!isSubmitting && actionData && showProgress) {
-      setShowProgress(false);
-      setShowResults(true);
-    }
-  }, [isSubmitting, actionData, showProgress]);
 
   return (
     <ProtectedRoute requireAuth={true}>
@@ -194,12 +181,10 @@ export default function Predict() {
 
           {/* Prediction Form */}
           {!showResults && !showProgress && (
-          <Form 
-            method="post" 
+          <form 
             onSubmit={handleSubmit}
             ref={(ref) => setFormRef(ref)}
           >
-            <input type="hidden" name="firebaseToken" value={firebaseToken} />
             
             <div className="card bg-base-200 shadow-xl">
               <div className="card-body">
@@ -323,7 +308,7 @@ export default function Predict() {
                 </div>
               </div>
             </div>
-          </Form>
+          </form>
           )}
 
           {/* Progress Display */}
@@ -350,32 +335,32 @@ export default function Predict() {
           )}
 
           {/* Results Display */}
-          {actionData && showResults && (
+          {predictionResult && showResults && (
             <div className="card bg-base-200 shadow-xl mt-6">
               <div className="card-body">
                 <h2 className="card-title text-2xl mb-4">Prediction Results</h2>
                 
-                {'error' in actionData ? (
+                {'error' in predictionResult ? (
                   <div className="alert alert-error">
                     <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span><strong>Error:</strong> {actionData.error}</span>
+                    <span><strong>Error:</strong> {predictionResult.error}</span>
                   </div>
-                ) : 'prediction' in actionData && actionData.prediction ? (
+                ) : 'prediction' in predictionResult && predictionResult.prediction ? (
                   <div className="space-y-4">
                     {/* Ensemble Result */}
-                    <div className={`alert ${actionData.prediction.ensemble_result.prediction === 'survived' ? 'alert-success' : 'alert-warning'}`}>
+                    <div className={`alert ${predictionResult.prediction.ensemble_result.prediction === 'survived' ? 'alert-success' : 'alert-warning'}`}>
                       <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
                         <h3 className="font-bold">
-                          {actionData.prediction.ensemble_result.prediction === 'survived' ? '✅ Likely Survived' : '❌ Likely Did Not Survive'}
+                          {predictionResult.prediction.ensemble_result.prediction === 'survived' ? '✅ Likely Survived' : '❌ Likely Did Not Survive'}
                         </h3>
                         <div className="text-xs">
-                          Survival Probability: {Math.round(actionData.prediction.ensemble_result.probability * 100)}% 
-                          ({actionData.prediction.ensemble_result.confidence_level} confidence)
+                          Survival Probability: {Math.round(predictionResult.prediction.ensemble_result.probability * 100)}% 
+                          ({predictionResult.prediction.ensemble_result.confidence_level} confidence)
                         </div>
                       </div>
                     </div>
@@ -386,10 +371,10 @@ export default function Predict() {
                         <div className="stat">
                           <div className="stat-title">Logistic Regression</div>
                           <div className="stat-value text-sm">
-                            {Math.round(actionData.prediction.individual_models.logistic_regression.probability * 100)}%
+                            {Math.round(predictionResult.prediction.individual_models.logistic_regression.probability * 100)}%
                           </div>
                           <div className="stat-desc">
-                            {actionData.prediction.individual_models.logistic_regression.prediction === 'survived' ? 'Survived' : 'Did not survive'}
+                            {predictionResult.prediction.individual_models.logistic_regression.prediction === 'survived' ? 'Survived' : 'Did not survive'}
                           </div>
                         </div>
                       </div>
@@ -398,10 +383,10 @@ export default function Predict() {
                         <div className="stat">
                           <div className="stat-title">Decision Tree</div>
                           <div className="stat-value text-sm">
-                            {Math.round(actionData.prediction.individual_models.decision_tree.probability * 100)}%
+                            {Math.round(predictionResult.prediction.individual_models.decision_tree.probability * 100)}%
                           </div>
                           <div className="stat-desc">
-                            {actionData.prediction.individual_models.decision_tree.prediction === 'survived' ? 'Survived' : 'Did not survive'}
+                            {predictionResult.prediction.individual_models.decision_tree.prediction === 'survived' ? 'Survived' : 'Did not survive'}
                           </div>
                         </div>
                       </div>
