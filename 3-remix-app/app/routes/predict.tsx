@@ -1,12 +1,12 @@
-import type { MetaFunction, LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import React, { useState } from 'react';
 import { ProtectedRoute } from '~/components/auth/ProtectedRoute';
 import { useAuth } from '~/contexts/AuthContext';
 import { getClientEnv } from '~/utils/env';
-import { makePrediction } from '~/services/predictionService';
 import type { PredictionRequest } from '~/services/mlService';
+import type { PredictionServiceResult } from '~/services/predictionService';
 
 export const meta: MetaFunction = () => {
   return [
@@ -23,45 +23,6 @@ export async function loader(_args: LoaderFunctionArgs) {
   return json({ env: clientEnv });
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, { status: 405 });
-  }
-
-  // Get Firebase token from Authorization header
-  const authHeader = request.headers.get('Authorization');
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  const firebaseToken = authHeader.substring(7);
-
-  // Parse form data
-  const formData = await request.formData();
-  
-  // Extract prediction parameters
-  const predictionData: PredictionRequest = {
-    pclass: parseInt(formData.get('pclass') as string),
-    sex: formData.get('sex') as string,
-    age: parseFloat(formData.get('age') as string),
-    sibsp: parseInt(formData.get('sibsp') as string),
-    parch: parseInt(formData.get('parch') as string),
-    fare: parseFloat(formData.get('fare') as string),
-    embarked: formData.get('embarked') as string,
-  };
-
-  // Use shared prediction service
-  const result = await makePrediction({ firebaseToken, predictionData });
-
-  if (!result.success) {
-    const status = result.error === 'Authentication failed' ? 401 : 
-                   result.missingFields ? 400 : 500;
-    return json(result, { status });
-  }
-
-  return json(result);
-}
 
 export default function Predict() {
   const { env } = useLoaderData<typeof loader>();
@@ -87,7 +48,7 @@ export default function Predict() {
 
   // State to hold Firebase token and prediction result
   const [firebaseToken, setFirebaseToken] = useState<string>('');
-  const [predictionResult, setPredictionResult] = useState<any>(null);
+  const [predictionResult, setPredictionResult] = useState<PredictionServiceResult | null>(null);
 
   // Get Firebase ID token when user is available
   React.useEffect(() => {
@@ -117,19 +78,16 @@ export default function Predict() {
       });
 
       const result = await response.json();
-      
-      setIsSubmitting(false);
-      setShowProgress(false);
-      window.dispatchEvent(new CustomEvent('predictionResult', { detail: result }));
-      setShowResults(true);
-      
+      setPredictionResult(result);
     } catch (error) {
       console.error('Prediction request failed:', error);
+      setPredictionResult({
+        success: false,
+        error: 'Failed to make prediction request'
+      });
+    } finally {
       setIsSubmitting(false);
       setShowProgress(false);
-      window.dispatchEvent(new CustomEvent('predictionResult', { 
-        detail: { error: 'Failed to make prediction request' } 
-      }));
       setShowResults(true);
     }
   };
@@ -143,18 +101,6 @@ export default function Predict() {
     }
   };
 
-  // Handle prediction results from custom events
-  React.useEffect(() => {
-    const handlePredictionResult = (event: any) => {
-      setPredictionResult(event.detail);
-    };
-
-    window.addEventListener('predictionResult', handlePredictionResult);
-    
-    return () => {
-      window.removeEventListener('predictionResult', handlePredictionResult);
-    };
-  }, []);
 
   return (
     <ProtectedRoute requireAuth={true}>
