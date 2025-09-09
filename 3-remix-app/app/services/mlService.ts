@@ -161,7 +161,7 @@ class MLService {
   /**
    * Get model information
    */
-  async getModelInfo(userId: string): Promise<any> {
+  async getModelInfo(userId: string): Promise<unknown> {
     return this.makeRequest('/model-info', userId);
   }
 }

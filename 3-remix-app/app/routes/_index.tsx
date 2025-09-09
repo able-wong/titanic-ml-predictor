@@ -4,7 +4,6 @@ import { useLoaderData, useNavigate } from '@remix-run/react';
 import { createLogger } from '~/utils/logger';
 import { useAuth } from '~/contexts/AuthContext';
 import { SignInButton } from '~/components/auth/SignInButton';
-import { UserProfile } from '~/components/auth/UserProfile';
 
 export const meta: MetaFunction = () => {
   return [
@@ -36,8 +35,8 @@ export async function loader(_args: LoaderFunctionArgs) {
 }
 
 export default function Index() {
-  const { env } = useLoaderData<typeof loader>();
-  const { user, loading, initialized, logout, signInWithGoogle, authChecked } = useAuth();
+  const { env: _env } = useLoaderData<typeof loader>();
+  const { user, loading, initialized, logout, signInWithGoogle, authChecked: _authChecked } = useAuth();
   const navigate = useNavigate();
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
@@ -62,7 +61,7 @@ export default function Index() {
                   <span className="text-sm">
                     Hi, {user.displayName?.split(' ')[0] || 'User'} |{' '}
                     <button 
-                      onClick={() => logout().catch(console.error)}
+                      onClick={() => void logout().catch(console.error)}
                       className="link link-hover"
                     >
                       Sign out
@@ -70,7 +69,7 @@ export default function Index() {
                   </span>
                 ) : (
                   <button 
-                    onClick={() => signInWithGoogle().catch(console.error)}
+                    onClick={() => void signInWithGoogle().catch(console.error)}
                     className="link link-hover text-sm"
                   >
                     Sign in

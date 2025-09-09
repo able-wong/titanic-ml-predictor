@@ -3,7 +3,7 @@
  * Wraps content that requires authentication
  */
 
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { SignInButton } from './SignInButton';
 
