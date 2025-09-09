@@ -107,13 +107,13 @@ export default function Predict() {
     }
   };
 
-  // Show results when action data is available and we're showing progress
+  // Show results when action data is available and submission is complete
   React.useEffect(() => {
-    if (actionData && showProgress) {
+    if (!isSubmitting && actionData && showProgress) {
       setShowProgress(false);
       setShowResults(true);
     }
-  }, [actionData, showProgress]);
+  }, [isSubmitting, actionData, showProgress]);
 
   return (
     <ProtectedRoute requireAuth={true}>
@@ -193,7 +193,7 @@ export default function Predict() {
           </div>
 
           {/* Prediction Form */}
-          {!showResults && (
+          {!showResults && !showProgress && (
           <Form 
             method="post" 
             onSubmit={handleSubmit}
