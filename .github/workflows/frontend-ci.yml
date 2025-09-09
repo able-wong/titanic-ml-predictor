@@ -1,0 +1,51 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - '3-remix-app/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '3-remix-app/**'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  frontend-test-and-typecheck:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./3-remix-app
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: './3-remix-app/package-lock.json'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run TypeScript type checking
+      run: npm run typecheck
+    
+    - name: Run unit tests
+      run: npm test
+    
+    - name: Build application
+      run: npm run build
+      env:
+        # Provide minimal env vars needed for build
+        NODE_ENV: production

@@ -356,8 +356,8 @@ function convertToFirestoreValue(value: unknown): FirestoreValue {
     return { stringValue: String(value) };
   }
 
-  // For anything else, use a safe fallback
-  return { stringValue: 'unsupported_type' };
+  // Throw explicit error for unsupported data types
+  throw new Error(`Unsupported data type for Firestore conversion: ${typeof value}`);
 }
 
 /**
