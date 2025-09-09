@@ -193,7 +193,7 @@ export default function Predict() {
           </div>
 
           {/* Prediction Form */}
-          {!showResults && (
+          {!showResults && !showProgress && (
           <Form 
             method="post" 
             onSubmit={handleSubmit}
