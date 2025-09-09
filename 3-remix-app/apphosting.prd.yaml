@@ -6,7 +6,7 @@ runConfig:
   memoryMiB: 512
   maxInstances: 4
   minInstances: 0
-  concurrency: 5
+  concurrency: 50
 
 # Environment configuration for production
 env:
