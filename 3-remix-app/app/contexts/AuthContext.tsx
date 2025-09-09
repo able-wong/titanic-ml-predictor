@@ -3,7 +3,7 @@
  * Provides Firebase Auth state management and user session handling
  */
 
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { 
   User, 
   GoogleAuthProvider, 
@@ -89,16 +89,18 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
       
       // The user is automatically set via onAuthStateChanged listener
       console.log('Successfully signed in:', result.user.displayName);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google sign-in error:', error);
       
       // Handle specific Firebase Auth errors
-      if (error.code === 'auth/popup-closed-by-user') {
+      const firebaseError = error as { code?: string; message?: string };
+      if (firebaseError.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled. Please try again.');
-      } else if (error.code === 'auth/popup-blocked') {
+      } else if (firebaseError.code === 'auth/popup-blocked') {
         throw new Error('Pop-up blocked. Please allow pop-ups and try again.');
       } else {
-        throw new Error(`Sign-in failed: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Sign-in failed: ${errorMessage}`);
       }
     } finally {
       setLoading(false); // Always reset loading state
@@ -116,9 +118,10 @@ export function AuthProvider({ children, env }: AuthProviderProps) {
       const auth = await getFirebaseAuth(env);
       await signOut(auth);
       console.log('Successfully signed out');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign-out error:', error);
-      throw new Error(`Sign-out failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Sign-out failed: ${errorMessage}`);
     } finally {
       setLoading(false); // Always reset loading state
     }
