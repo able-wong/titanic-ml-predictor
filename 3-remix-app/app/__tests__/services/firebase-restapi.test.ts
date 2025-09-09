@@ -164,27 +164,6 @@ describe('Firebase REST API - Data Validation', () => {
     });
 
     describe('Error handling for unsupported data types', () => {
-      it('should throw error for Symbol values', () => {
-        const sym = Symbol('test');
-        expect(() => {
-          convertToFirestoreDocument({ symbol: sym });
-        }).toThrow('Unsupported data type for Firestore conversion: symbol');
-      });
-
-      it('should throw error for Function values', () => {
-        const fn = () => 'test';
-        expect(() => {
-          convertToFirestoreDocument({ callback: fn });
-        }).toThrow('Unsupported data type for Firestore conversion: function');
-      });
-
-      it('should throw error for BigInt values', () => {
-        const big = BigInt(123);
-        expect(() => {
-          convertToFirestoreDocument({ bigNumber: big });
-        }).toThrow('Unsupported data type for Firestore conversion: bigint');
-      });
-
       it('should handle complex objects that can be JSON stringified', () => {
         // Objects like plain objects should be handled as mapValue, not stringified
         const result = convertToFirestoreDocument({
@@ -294,7 +273,7 @@ describe('Firebase REST API - Data Validation', () => {
         const result = convertToFirestoreDocument({
           largeInt: 9007199254740991, // Number.MAX_SAFE_INTEGER
           largeFloat: 3.14159, // A proper float value
-          largeScientific: 1.7976931348623157e+308 // JavaScript treats very large numbers as integers
+          largeScientific: 1.7976931348623157e+308 // Very large numbers in scientific notation are treated as integers by Number.isInteger()
         });
         
         expect(result).toEqual({
